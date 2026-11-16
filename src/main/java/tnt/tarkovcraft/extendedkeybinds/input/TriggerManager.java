@@ -1,4 +1,4 @@
-package dev.tnt.extendedkeybinds.input;
+package tnt.tarkovcraft.extendedkeybinds.input;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.util.Util;

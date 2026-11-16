@@ -1,8 +1,8 @@
-package dev.tnt.extendedkeybinds.mixin;
+package tnt.tarkovcraft.extendedkeybinds.mixin;
 
-import dev.tnt.extendedkeybinds.api.ExtendedKeyMapping;
-import dev.tnt.extendedkeybinds.input.InputMode;
-import dev.tnt.extendedkeybinds.input.KeymappingFileStorage;
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.input.KeymappingFileStorage;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import org.spongepowered.asm.mixin.Final;

@@ -1,10 +1,10 @@
-package dev.tnt.extendedkeybinds.mixin;
+package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.tnt.extendedkeybinds.ExtendedKeybindsClient;
-import dev.tnt.extendedkeybinds.api.ExtendedKeyMapping;
-import dev.tnt.extendedkeybinds.api.KeyPressContext;
-import dev.tnt.extendedkeybinds.input.*;
+import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
+import tnt.tarkovcraft.extendedkeybinds.input.*;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.ToggleKeyMapping;
 import net.minecraft.util.Util;

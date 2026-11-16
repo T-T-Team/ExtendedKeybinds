@@ -1,4 +1,4 @@
-package dev.tnt.extendedkeybinds.input;
+package tnt.tarkovcraft.extendedkeybinds.input;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.network.chat.Component;

@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "dev.tnt.extendedkeybinds.mixin",
+  "package": "tnt.tarkovcraft.extendedkeybinds.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
     "KeyBindsListKeyEntryMixin",

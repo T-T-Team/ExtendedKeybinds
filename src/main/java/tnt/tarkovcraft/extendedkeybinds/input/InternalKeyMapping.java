@@ -1,4 +1,4 @@
-package dev.tnt.extendedkeybinds.input;
+package tnt.tarkovcraft.extendedkeybinds.input;
 
 public interface InternalKeyMapping {
 

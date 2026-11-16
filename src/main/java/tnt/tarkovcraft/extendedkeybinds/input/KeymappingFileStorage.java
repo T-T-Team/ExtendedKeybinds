@@ -1,4 +1,4 @@
-package dev.tnt.extendedkeybinds.input;
+package tnt.tarkovcraft.extendedkeybinds.input;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -6,8 +6,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import dev.tnt.extendedkeybinds.ExtendedKeybindsClient;
-import dev.tnt.extendedkeybinds.api.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.fml.loading.FMLPaths;
 
