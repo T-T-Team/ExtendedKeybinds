@@ -2,7 +2,9 @@
   "required": true,
   "package": "dev.tnt.extendedkeybinds.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": [],
+  "client": [
+    "KeyMappingMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
