@@ -3,7 +3,9 @@
   "package": "dev.tnt.extendedkeybinds.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "KeyMappingMixin"
+    "KeyBindsListKeyEntryMixin",
+    "KeyMappingMixin",
+    "OptionsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

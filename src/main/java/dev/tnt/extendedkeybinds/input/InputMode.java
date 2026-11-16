@@ -1,5 +1,7 @@
 package dev.tnt.extendedkeybinds.input;
 
+import com.mojang.serialization.Codec;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 
 public enum InputMode implements StringRepresentable {
@@ -15,6 +17,8 @@ public enum InputMode implements StringRepresentable {
     // continuously triggered on each game tick when pressed
     CONTINUOUS("continuous");
 
+    public static final Codec<InputMode> CODEC = StringRepresentable.fromEnum(InputMode::values);
+
     private final String serializedName;
 
     InputMode(String serializedName) {
@@ -24,5 +28,21 @@ public enum InputMode implements StringRepresentable {
     @Override
     public String getSerializedName() {
         return serializedName;
+    }
+
+    public String getTranslationKey() {
+        return "extendedkeybinds.mode." + this.serializedName;
+    }
+
+    public Component getDisplayName() {
+        return Component.translatable(this.getTranslationKey());
+    }
+
+    public Component getShortName() {
+        return Component.translatable(this.getTranslationKey() + ".short");
+    }
+
+    public Component getDescription(InputSettings timings) {
+        return Component.translatable(this.getTranslationKey() + ".description", timings.holdDuration(), timings.doubleClickInterval());
     }
 }

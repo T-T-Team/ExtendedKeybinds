@@ -1,9 +1,10 @@
 package dev.tnt.extendedkeybinds;
 
+import dev.tnt.extendedkeybinds.input.TriggerManager;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +14,8 @@ public class ExtendedKeybindsClient {
     public static final String MODID = "extendedkeybinds";
     public static final Logger LOGGER = LogManager.getLogger("ExtendedKeybinds");
 
-    public ExtendedKeybindsClient(IEventBus modEventBus, ModContainer modContainer) {
+    public ExtendedKeybindsClient() {
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, TriggerManager::onPreTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, TriggerManager::onPostTick);
     }
 }
