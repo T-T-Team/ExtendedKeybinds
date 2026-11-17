@@ -10,6 +10,7 @@ import net.minecraft.client.KeyMapping;
 import net.neoforged.fml.loading.FMLPaths;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

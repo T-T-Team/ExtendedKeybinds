@@ -1,6 +1,7 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 
 public final class TriggerStateMachine {
 

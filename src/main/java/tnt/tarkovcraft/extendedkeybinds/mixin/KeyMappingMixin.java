@@ -2,6 +2,7 @@ package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 import tnt.tarkovcraft.extendedkeybinds.input.*;

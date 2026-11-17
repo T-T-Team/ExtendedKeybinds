@@ -1,8 +1,8 @@
 package tnt.tarkovcraft.extendedkeybinds.api;
 
+import org.jetbrains.annotations.ApiStatus;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
-import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
 import net.minecraft.client.KeyMapping;
 
 import java.util.Arrays;
@@ -10,6 +10,17 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 
+/**
+ * Essentially single point of interaction of other mods with this library. Provides all necessary methods for configuring
+ * your keybinds.
+ * When registering multiple actions you can utilize the {@link ExtendedKeybindsApi.Configurator} helper to set multiple
+ * properties at once. Otherwise, this API offers methods such as {@link ExtendedKeybindsApi#setInputMode(KeyMapping, InputMode)}
+ * to set active input mode or {@link ExtendedKeybindsApi#setDefaultInputMode(KeyMapping, InputMode)} to change default input mode method.
+ * You can also utilize trigger callbacks to easily hook up custom logic to your keybind using {@link ExtendedKeybindsApi#setTriggerListener(KeyMapping, Consumer)}
+ *
+ * @author Toma
+ * @since 1.0.0
+ */
 public final class ExtendedKeybindsApi {
 
     /**
@@ -19,6 +30,7 @@ public final class ExtendedKeybindsApi {
 
     /**
      * Allows you to configure any keymappings
+     *
      * @param mapping mapping to configure
      * @return Configurator used to adjust keybind properties
      * @see Configurator for more details
@@ -37,75 +49,139 @@ public final class ExtendedKeybindsApi {
 
     /**
      * Sets active input mode for keymapping
-     * @param mapping queried keymapping
+     *
+     * @param mapping   queried keymapping
      * @param inputMode new input mode. In case input mode is not allowed, only warning will be logged
      */
     public static void setInputMode(KeyMapping mapping, InputMode inputMode) {
         convert(mapping).extendedkeybinds$setInputMode(inputMode);
     }
 
+    /**
+     * @param mapping queried keymapping
+     * @return default input mode configured for given keybind
+     */
     public static InputMode getDefaultInputMode(KeyMapping mapping) {
         return convert(mapping).extendedkeybinds$getDefaultInputMode();
     }
 
+    /**
+     * Sets default input mode for keymapping. If the keymapping also has configured active mode equal to default mode,
+     * its selected input mode is changed too
+     *
+     * @param mapping   queried keymapping
+     * @param inputMode new default input mode
+     */
     public static void setDefaultInputMode(KeyMapping mapping, InputMode inputMode) {
         convert(mapping).extendedkeybinds$setDefaultInputMode(inputMode);
     }
 
+    /**
+     * @param mapping queried keymapping
+     * @return allowed input modes for this keymapping
+     */
     public static Set<InputMode> getAllowedInputModes(KeyMapping mapping) {
         return convert(mapping).extendedkeybinds$getAllowedInputModes();
     }
 
+    /**
+     * Allows you to configure allowed input modes for given keybind
+     *
+     * @param mapping queried keymapping
+     * @param set     set of allowed input modes, see also {@link InputMode#pressOnly()} and {@link InputMode#noContinuous()}
+     */
     public static void setAllowedInputModes(KeyMapping mapping, Collection<InputMode> set) {
         convert(mapping).extendedkeybinds$setAllowedInputModes(set);
     }
 
+    /**
+     * Adds new trigger listener for valid key presses. Each keymapping can have multiple listeners at once
+     *
+     * @param mapping  queried keymapping
+     * @param listener the key press listener
+     */
     public static void setTriggerListener(KeyMapping mapping, Consumer<KeyPressContext> listener) {
         convert(mapping).extendedkeybinds$addTriggerListener(listener);
     }
 
+    /**
+     * Removes trigger listener from keybind
+     *
+     * @param mapping  queried keymapping
+     * @param listener the key press listener to remove
+     */
     public static void removeTriggerListener(KeyMapping mapping, Consumer<KeyPressContext> listener) {
         convert(mapping).extendedkeybinds$removeTriggerListener(listener);
     }
 
+    /**
+     * @return Configured required hold duration for {@link InputMode#HOLD} keybinds
+     */
     public static int getRequiredHoldDuration() {
         return ExtendedKeybindsClient.CONFIG.holdDuration;
     }
 
+    /**
+     * @return Configured max interval between key presses in order to be registered for {@link InputMode#DOUBLE_CLICK} keybinds
+     */
     public static int getDoubleClickInterval() {
         return ExtendedKeybindsClient.CONFIG.doubleClickInterval;
     }
 
+    @ApiStatus.Internal
     private static ExtendedKeyMapping convert(KeyMapping mapping) {
         return (ExtendedKeyMapping) mapping;
     }
 
+    @ApiStatus.Internal
     private ExtendedKeybindsApi() {
     }
 
+    /**
+     * Configurator helper for specific keybinds. Utilizing builder pattern for chained configuration
+     */
     public static final class Configurator {
 
         private final KeyMapping mapping;
 
+        @ApiStatus.Internal
         private Configurator(KeyMapping mapping) {
             this.mapping = mapping;
         }
 
+        /**
+         * Sets default mode for keymapping, same as {@link ExtendedKeybindsApi#setDefaultInputMode(KeyMapping, InputMode)}
+         *
+         * @param mode default input mode
+         */
         public Configurator defaultMode(InputMode mode) {
             convert(this.mapping).extendedkeybinds$setDefaultInputMode(mode);
             return this;
         }
 
+        /**
+         * Sets allowed input modes for keymapping, same as {@link ExtendedKeybindsApi#setAllowedInputModes(KeyMapping, Collection)}
+         *
+         * @param modes allowed input modes
+         */
         public Configurator allowedModes(InputMode... modes) {
             convert(this.mapping).extendedkeybinds$setAllowedInputModes(Arrays.asList(modes));
             return this;
         }
 
+        /**
+         * Adds trigger listener for keymapping, same as {@link ExtendedKeybindsApi#setTriggerListener(KeyMapping, Consumer)}
+         *
+         * @param listener trigger listener
+         */
         public Configurator onTrigger(Consumer<KeyPressContext> listener) {
             ExtendedKeybindsApi.setTriggerListener(this.mapping, listener);
             return this;
         }
 
+        /**
+         * @return the original keymapping, useful when registering and configuring new keymappings at once
+         */
         public KeyMapping mapping() {
             return this.mapping;
         }

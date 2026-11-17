@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
-import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.input.KeymappingFileStorage;
 
 @Mixin(Options.class)

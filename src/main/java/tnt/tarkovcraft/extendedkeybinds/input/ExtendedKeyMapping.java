@@ -1,5 +1,6 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 
 import java.util.Collection;

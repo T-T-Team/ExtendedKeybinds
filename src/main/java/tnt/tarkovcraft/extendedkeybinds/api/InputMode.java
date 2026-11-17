@@ -1,4 +1,4 @@
-package tnt.tarkovcraft.extendedkeybinds.input;
+package tnt.tarkovcraft.extendedkeybinds.api;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.network.chat.Component;
@@ -13,15 +13,15 @@ import java.util.Set;
 
 public enum InputMode implements StringRepresentable {
 
-    // vanilla-like press event, default for all keybinds
+    /** vanilla-like press event, default for all keybinds */
     PRESS("press"),
-    // same as above but triggered once key is released
+    /** Same as above but triggered once key is released */
     RELEASE("release"),
-    // requires you to hold the key for some time before keybinding is triggered
+    /** Requires you to hold the key for some time before keybinding is triggered */
     HOLD("hold"),
-    // requires you to double-click the key
+    /** Requires you to double-click the key */
     DOUBLE_CLICK("double_click"),
-    // continuously triggered on each game tick when pressed
+    /** Continuously triggered on each game tick when pressed */
     CONTINUOUS("continuous");
 
     public static final Codec<InputMode> CODEC = StringRepresentable.fromEnum(InputMode::values);
