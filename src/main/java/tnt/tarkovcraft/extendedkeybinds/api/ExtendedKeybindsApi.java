@@ -1,9 +1,12 @@
 package tnt.tarkovcraft.extendedkeybinds.api;
 
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
-import net.minecraft.client.KeyMapping;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +30,7 @@ public final class ExtendedKeybindsApi {
      * Mod ID in case you need it for something
      */
     public static final String MODID = "extendedkeybinds";
+    public static final int BUTTON_SIZE = 20;
 
     /**
      * Allows you to configure any keymappings
@@ -128,6 +132,24 @@ public final class ExtendedKeybindsApi {
         return ExtendedKeybindsClient.CONFIG.doubleClickInterval;
     }
 
+    /**
+     * Creates default widget for cycling input modes in UI
+     * @param keyMapping Keymapping for the widget
+     * @param mappingName Display name
+     * @param x x position in UI
+     * @param y y position in UI
+     * @param cycleHandler function responsible for changing the selected input mode for keymapping
+     * @return new configured button
+     */
+    public static Button createInputModeWidget(KeyMapping keyMapping, Component mappingName, int x, int y, ModeCycleHandler cycleHandler) {
+        InputMode inputMode = getInputMode(keyMapping);
+        Component displayName = inputMode.getDisplayName();
+        return Button.builder(CommonComponents.EMPTY, _ -> cycleHandler.cycleButtonMode())
+                .bounds(x, y, BUTTON_SIZE, BUTTON_SIZE)
+                .createNarration(_ -> Component.translatable("extendedkeybinds.narrator.mode", mappingName, displayName))
+                .build();
+    }
+
     @ApiStatus.Internal
     private static ExtendedKeyMapping convert(KeyMapping mapping) {
         return (ExtendedKeyMapping) mapping;
@@ -135,6 +157,11 @@ public final class ExtendedKeybindsApi {
 
     @ApiStatus.Internal
     private ExtendedKeybindsApi() {
+    }
+
+    @FunctionalInterface
+    public interface ModeCycleHandler {
+        void cycleButtonMode();
     }
 
     /**

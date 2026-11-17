@@ -18,8 +18,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +28,6 @@ import java.util.Set;
 
 @Mixin(KeyBindsList.KeyEntry.class)
 public abstract class KeyBindsListKeyEntryMixin {
-
-    @Unique
-    private static final int extendedkeybinds$BUTTON_SIZE = 20;
-
-    @Unique
-    private static final int extendedkeybinds$BUTTON_GAP = 7;
 
     @Shadow
     @Final
@@ -52,11 +47,7 @@ public abstract class KeyBindsListKeyEntryMixin {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void extendedkeybinds$init(KeyBindsList list, KeyMapping key, Component name, CallbackInfo ci) {
-        this.extendedkeybinds$modeButton = Button.builder(Component.empty(), _ -> this.extendedkeybinds$cycleMode())
-                .bounds(0, 0, extendedkeybinds$BUTTON_SIZE, extendedkeybinds$BUTTON_SIZE)
-                .createNarration(_ -> Component.translatable(
-                        "extendedkeybinds.narrator.mode", this.name, this.extendedkeybinds$extended().extendedkeybinds$getInputMode().getDisplayName()))
-                .build();
+        this.extendedkeybinds$modeButton = ExtendedKeybindsApi.createInputModeWidget(this.key, this.name, 0, 0, this::extendedkeybinds$cycleMode);
         this.extendedkeybinds$updateModeButton();
     }
 
@@ -64,7 +55,8 @@ public abstract class KeyBindsListKeyEntryMixin {
     private void extendedkeybinds$render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a, CallbackInfo ci) {
         Button button = this.extendedkeybinds$modeButton;
         if (button != null && button.visible) {
-            button.setPosition(this.changeButton.getX() - extendedkeybinds$BUTTON_GAP - extendedkeybinds$BUTTON_SIZE, this.changeButton.getY());
+            // gap between conflict and buttons is 7px
+            button.setPosition(this.changeButton.getX() - 7 - ExtendedKeybindsApi.BUTTON_SIZE, this.changeButton.getY());
             button.extractRenderState(graphics, mouseX, mouseY, a);
         }
     }
@@ -72,7 +64,7 @@ public abstract class KeyBindsListKeyEntryMixin {
     @Inject(method = "children", at = @At("RETURN"), cancellable = true)
     private void extendedkeybinds$children(CallbackInfoReturnable<List<? extends GuiEventListener>> cir) {
         Button button = this.extendedkeybinds$modeButton;
-        if (button != null && button.visible) {
+        if (button != null && button.active) {
             List<GuiEventListener> children = new ArrayList<>(cir.getReturnValue());
             children.addFirst(button);
             cir.setReturnValue(children);
@@ -82,7 +74,7 @@ public abstract class KeyBindsListKeyEntryMixin {
     @Inject(method = "narratables", at = @At("RETURN"), cancellable = true)
     private void extendedkeybinds$narratables(CallbackInfoReturnable<List<? extends NarratableEntry>> cir) {
         Button button = this.extendedkeybinds$modeButton;
-        if (button != null && button.visible) {
+        if (button != null && button.active) {
             List<NarratableEntry> narratables = new ArrayList<>(cir.getReturnValue());
             narratables.addFirst(button);
             cir.setReturnValue(narratables);
@@ -96,7 +88,7 @@ public abstract class KeyBindsListKeyEntryMixin {
 
     @Unique
     private void extendedkeybinds$cycleMode() {
-        ExtendedKeyMapping extended = this.extendedkeybinds$extended();
+        ExtendedKeyMapping extended = (ExtendedKeyMapping) this.key;
         List<InputMode> allowed = List.copyOf(extended.extendedkeybinds$getAllowedInputModes());
         int index = allowed.indexOf(extended.extendedkeybinds$getInputMode());
         extended.extendedkeybinds$setInputMode(allowed.get((index + 1) % allowed.size()));
@@ -109,19 +101,13 @@ public abstract class KeyBindsListKeyEntryMixin {
         if (button == null) {
             return;
         }
-        ExtendedKeyMapping extended = this.extendedkeybinds$extended();
+        ExtendedKeyMapping extended = (ExtendedKeyMapping) this.key;
         Set<InputMode> allowed = extended.extendedkeybinds$getAllowedInputModes();
         InputMode mode = extended.extendedkeybinds$getInputMode();
-        button.visible = !allowed.equals(Set.of(InputMode.PRESS));
         button.active = allowed.size() > 1;
         button.setMessage(mode.getShortName());
         button.setTooltip(Tooltip.create(Component.translatable("extendedkeybinds.mode.tooltip", mode.getDisplayName().withStyle(ChatFormatting.YELLOW))
                 .append("\n")
                 .append(mode.getDescription().withStyle(ChatFormatting.GRAY))));
-    }
-
-    @Unique
-    private ExtendedKeyMapping extendedkeybinds$extended() {
-        return (ExtendedKeyMapping) this.key;
     }
 }
