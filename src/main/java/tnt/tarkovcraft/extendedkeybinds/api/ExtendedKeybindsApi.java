@@ -19,7 +19,8 @@ import java.util.function.Consumer;
  * When registering multiple actions you can utilize the {@link ExtendedKeybindsApi.Configurator} helper to set multiple
  * properties at once. Otherwise, this API offers methods such as {@link ExtendedKeybindsApi#setInputMode(KeyMapping, InputMode)}
  * to set active input mode or {@link ExtendedKeybindsApi#setDefaultInputMode(KeyMapping, InputMode)} to change default input mode method.
- * You can also utilize trigger callbacks to easily hook up custom logic to your keybind using {@link ExtendedKeybindsApi#setTriggerListener(KeyMapping, Consumer)}
+ * You can also utilize trigger callbacks to easily hook up custom logic to your keybind using {@link ExtendedKeybindsApi#setTriggerListener(KeyMapping, Consumer)}.
+ * There are also various events you can find in {@link tnt.tarkovcraft.extendedkeybinds.api.event} package
  *
  * @author Toma
  * @since 1.0.0
