@@ -9,7 +9,7 @@ env:
   JAVA_VERSION: '25'
   GAME_DEPENDENCIES: 'configuration'
   CURSEFORGE_PROJECT: '1812598'
-  MODRINTH_PROJECT: ''
+  MODRINTH_PROJECT: 'oY4xE7DQ'
 
 concurrency:
   group: release-${{ github.ref }}
