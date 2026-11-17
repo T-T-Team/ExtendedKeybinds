@@ -13,12 +13,7 @@ import java.util.Set;
 
 public enum InputMode implements StringRepresentable {
 
-    /**
-     * Triggered once when the key is pressed, default for all keybinds. Holding the key does not trigger again and
-     * {@link net.minecraft.client.KeyMapping#isDown()} is only true for a single tick.
-     * When the key is shared with {@link #HOLD} or {@link #DOUBLE_CLICK} keybinds, the trigger is delayed until the
-     * gesture is resolved (key release / double click interval expiry).
-     */
+    /** Triggered once when the key is pressed, default for all keybinds */
     PRESS("press"),
     /** Same as above but triggered once key is released */
     RELEASE("release"),
