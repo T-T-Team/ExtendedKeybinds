@@ -1,6 +1,6 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
-public interface InternalKeyMapping {
+public interface TickableKeyMapping {
 
     void extendedkeybinds$preTick(long now);
 

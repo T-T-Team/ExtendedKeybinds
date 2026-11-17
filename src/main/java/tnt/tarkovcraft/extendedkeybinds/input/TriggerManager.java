@@ -34,13 +34,13 @@ public final class TriggerManager {
     public static void onPreTick(ClientTickEvent.Pre event) {
         long now = Util.getMillis();
         for (KeyMapping mapping : snapshot) {
-            ((InternalKeyMapping) mapping).extendedkeybinds$preTick(now);
+            ((TickableKeyMapping) mapping).extendedkeybinds$preTick(now);
         }
     }
 
     public static void onPostTick(ClientTickEvent.Post event) {
         for (KeyMapping mapping : snapshot) {
-            ((InternalKeyMapping) mapping).extendedkeybinds$postTick();
+            ((TickableKeyMapping) mapping).extendedkeybinds$postTick();
         }
     }
 }

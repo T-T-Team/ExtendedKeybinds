@@ -1,13 +1,13 @@
 package tnt.tarkovcraft.extendedkeybinds.api;
 
 import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.input.InternalKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.TickableKeyMapping;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public interface ExtendedKeyMapping extends InternalKeyMapping {
+public interface ExtendedKeyMapping extends TickableKeyMapping {
 
     default InputMode extendedkeybinds$getInputMode() {
         throw new UnsupportedOperationException("Not implemented");
