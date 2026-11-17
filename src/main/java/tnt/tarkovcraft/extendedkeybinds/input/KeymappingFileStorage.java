@@ -3,6 +3,7 @@ package tnt.tarkovcraft.extendedkeybinds.input;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
@@ -31,7 +32,7 @@ public final class KeymappingFileStorage {
     }
 
     private static Path getMappingFilePath() {
-        return FMLPaths.CONFIGDIR.get().resolve("extendedkeybinds/key_types.json");
+        return FMLPaths.CONFIGDIR.get().resolve("extendedkeybinds/keymap.json");
     }
 
     public static void load(KeyMapping[] keyMappings) {
@@ -42,13 +43,14 @@ public final class KeymappingFileStorage {
             extended.extendedkeybinds$setInputMode(extended.extendedkeybinds$getDefaultInputMode());
         }
         if (!Files.exists(path)) {
+            ExtendedKeybindsClient.LOGGER.debug("Did not find any save files, skipping save file processing");
             return;
         }
 
         JsonElement json;
         try {
             String raw = Files.readString(path);
-            json = GSON.toJsonTree(raw);
+            json = JsonParser.parseString(raw);
         } catch (Exception e) {
             ExtendedKeybindsClient.LOGGER.error("Failed to read {}, using defaults", path, e);
             return;
