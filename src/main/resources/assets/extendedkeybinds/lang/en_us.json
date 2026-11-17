@@ -16,5 +16,11 @@
   "extendedkeybinds.mode.continuous.description": "Triggers every tick while the key is held.",
   "extendedkeybinds.mode.tooltip": "Trigger mode: %s",
 
-  "extendedkeybinds.narrator.mode": "Trigger mode for %s: %s"
+  "extendedkeybinds.narrator.mode": "Trigger mode for %s: %s",
+
+  "config.screen.extendedkeybinds": "Extended keybinds",
+  "config.extendedkeybinds.option.holdDuration": "Hold Duration (ms)",
+  "config.extendedkeybinds.option.holdDuration.comment.0": "For how long (in ms) you need to hold keybind in Hold mode in order for it to be triggered",
+  "config.extendedkeybinds.option.doubleClickInterval": "Double-Click Interval (ms)",
+  "config.extendedkeybinds.option.doubleClickInterval.comment.0": "Interval (in ms) within which you must press the key again in order to register as a double click"
 }
