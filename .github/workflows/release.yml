@@ -30,7 +30,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - uses: gradle/actions/setup-gradle@v6
       - run: chmod +x ./gradlew
-      - run: ./gradlew :${{ matrix.loader }}:assemble --no-configuration-cache
+      - run: ./gradlew :assemble --no-configuration-cache
       - uses: actions/upload-artifact@v7
         with:
           name: artifact-${{ matrix.loader }}
