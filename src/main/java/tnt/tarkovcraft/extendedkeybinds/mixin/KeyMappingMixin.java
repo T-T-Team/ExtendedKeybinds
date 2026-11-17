@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
+import tnt.tarkovcraft.extendedkeybinds.api.ScrollKeys;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 import tnt.tarkovcraft.extendedkeybinds.input.TriggerManager;
 import tnt.tarkovcraft.extendedkeybinds.input.TriggerStateMachine;
@@ -61,6 +62,13 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Override
     public InputMode extendedkeybinds$getInputMode() {
         return this.extendedkeybinds$inputMode;
+    }
+
+    @Override
+    public InputMode extendedkeybinds$getEffectiveInputMode() {
+        return ScrollKeys.isScrollKey(this.getKey())
+                ? InputMode.PRESS
+                : this.extendedkeybinds$inputMode;
     }
 
     @Override
@@ -164,9 +172,9 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
         // release may get lost (focus change, screen swallowing the event), synthesize it
         if (state.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()) {
-            state.onInput(false, this.extendedkeybinds$inputMode, now, false);
+            state.onInput(false, this.extendedkeybinds$getEffectiveInputMode(), now, false);
         }
-        state.preTick(this.extendedkeybinds$inputMode, now);
+        state.preTick(this.extendedkeybinds$getEffectiveInputMode(), now);
         this.extendedkeybinds$syncLogicalDown(state);
     }
 
@@ -197,9 +205,9 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (state == null) {
             return;
         }
-        state.onInput(down, this.extendedkeybinds$inputMode, TriggerManager.now(), TriggerManager.isSyncingKeyStates());
+        state.onInput(down, this.extendedkeybinds$getEffectiveInputMode(), TriggerManager.now(), TriggerManager.isSyncingKeyStates());
         if (!legacy) {
-            this.isDown = state.logicalDown(this.extendedkeybinds$inputMode);
+            this.isDown = state.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
             ci.cancel();
         }
     }
@@ -209,7 +217,6 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (this.extendedkeybinds$isLegacy()) {
             return;
         }
-        // vanilla click count also increments on OS key repeat, triggers come from the state machine only
         this.clickCount = 0;
         cir.setReturnValue(this.extendedkeybinds$getOrCreateState().consumeTrigger());
     }
@@ -247,7 +254,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             return;
         }
         if (this.getKey().equals(that.getKey()) && this.getKeyModifier() == that.getKeyModifier()
-                && extendedkeybinds$areModesDistinguishable(this.extendedkeybinds$inputMode, ((ExtendedKeyMapping) that).extendedkeybinds$getInputMode())) {
+                && extendedkeybinds$areModesDistinguishable(this.extendedkeybinds$getEffectiveInputMode(), ((ExtendedKeyMapping) that).extendedkeybinds$getEffectiveInputMode())) {
             cir.setReturnValue(false);
         }
     }
@@ -287,7 +294,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Unique
     private void extendedkeybinds$syncLogicalDown(TriggerStateMachine state) {
         if (!this.extendedkeybinds$isLegacy()) {
-            this.isDown = state.logicalDown(this.extendedkeybinds$inputMode);
+            this.isDown = state.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
         }
     }
 
@@ -299,13 +306,13 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
         KeyMapping self = (KeyMapping) (Object) this;
         InputConstants.Key key = this.getKey();
-        InputMode mode = this.extendedkeybinds$inputMode;
+        InputMode mode = this.extendedkeybinds$getEffectiveInputMode();
         for (KeyMapping other : ALL.values()) {
             if (other == self || !key.equals(other.getKey()) || this.getKeyModifier() != other.getKeyModifier()
                     || !other.isConflictContextAndModifierActive()) {
                 continue;
             }
-            InputMode otherMode = ((ExtendedKeyMapping) other).extendedkeybinds$getInputMode();
+            InputMode otherMode = ((ExtendedKeyMapping) other).extendedkeybinds$getEffectiveInputMode();
             if (extendedkeybinds$areModesDistinguishable(mode, otherMode)) {
                 modes.add(otherMode);
             }
@@ -319,7 +326,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (listeners == null || listeners.isEmpty()) {
             return;
         }
-        KeyPressContext context = new KeyPressContext((KeyMapping) (Object) this, this.extendedkeybinds$inputMode, heldMillis, heldTicks);
+        KeyPressContext context = new KeyPressContext((KeyMapping) (Object) this, this.extendedkeybinds$getEffectiveInputMode(), heldMillis, heldTicks);
         for (Consumer<KeyPressContext> listener : listeners) {
             try {
                 listener.accept(context);
@@ -332,6 +339,9 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Unique
     private boolean extendedkeybinds$isPhysicallyHeld() {
         InputConstants.Key key = this.getKey();
+        if (ScrollKeys.isScrollKey(key)) {
+            return false;
+        }
         return switch (key.getType()) {
             case KEYBOARD -> InputConstants.isKeyDown(key.getValue());
             case MOUSE -> extendedkeybinds$isMouseButtonDown(key.getValue());
@@ -349,10 +359,6 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
     }
 
-    /**
-     * Two modes can share a key when each physical gesture resolves to exactly one of them.
-     * CONTINUOUS reacts to every press and PRESS/RELEASE both react to every tap, so those pairs always conflict.
-     */
     @Unique
     private static boolean extendedkeybinds$areModesDistinguishable(InputMode a, InputMode b) {
         if (a == b || a == InputMode.CONTINUOUS || b == InputMode.CONTINUOUS) {

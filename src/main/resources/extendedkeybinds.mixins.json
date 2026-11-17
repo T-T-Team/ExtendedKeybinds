@@ -3,8 +3,11 @@
   "package": "tnt.tarkovcraft.extendedkeybinds.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "InputConstantsTypeMixin",
     "KeyBindsListKeyEntryMixin",
+    "KeyBindsScreenAccessor",
     "KeyMappingMixin",
+    "MouseHandlerMixin",
     "OptionsMixin"
   ],
   "injectors": {

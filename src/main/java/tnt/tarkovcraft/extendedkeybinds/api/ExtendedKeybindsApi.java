@@ -53,6 +53,15 @@ public final class ExtendedKeybindsApi {
     }
 
     /**
+     * @param mapping queried keymapping
+     * @return input mode which is actually applied to inputs. Differs from {@link #getInputMode(KeyMapping)} when the
+     * keymapping is bound to mouse wheel ({@link ScrollKeys}), which always behaves as {@link InputMode#PRESS}
+     */
+    public static InputMode getEffectiveInputMode(KeyMapping mapping) {
+        return convert(mapping).extendedkeybinds$getEffectiveInputMode();
+    }
+
+    /**
      * Sets active input mode for keymapping
      *
      * @param mapping   queried keymapping

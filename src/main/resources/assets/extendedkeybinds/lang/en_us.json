@@ -15,8 +15,16 @@
   "extendedkeybinds.mode.continuous.short": "∞",
   "extendedkeybinds.mode.continuous.description": "Triggers every tick while the key is held.",
   "extendedkeybinds.mode.tooltip": "Trigger mode: %s",
+  "extendedkeybinds.mode.scroll_locked": "Mouse wheel bindings always trigger once per scroll step.",
 
   "extendedkeybinds.narrator.mode": "Trigger mode for %s: %s",
+
+  "key.mouse.wheel.up": "Scroll Up",
+  "key.mouse.wheel.down": "Scroll Down",
+  "key.mouse.wheel.left": "Scroll Left",
+  "key.mouse.wheel.right": "Scroll Right",
+  "key.hotbar.previous": "Previous Hotbar Slot",
+  "key.hotbar.next": "Next Hotbar Slot",
 
   "config.screen.extendedkeybinds": "Extended keybinds",
   "config.extendedkeybinds.option.holdDuration": "Hold Duration (ms)",

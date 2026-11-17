@@ -13,6 +13,10 @@ public interface ExtendedKeyMapping extends TickableKeyMapping {
         throw new UnsupportedOperationException("Not implemented");
     }
 
+    default InputMode extendedkeybinds$getEffectiveInputMode() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     default void extendedkeybinds$setInputMode(InputMode inputMode) {
         throw new UnsupportedOperationException("Not implemented");
     }
