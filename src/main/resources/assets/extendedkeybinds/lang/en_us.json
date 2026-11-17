@@ -15,5 +15,6 @@
   "extendedkeybinds.mode.continuous.short": "∞",
   "extendedkeybinds.mode.continuous.description": "Triggers every tick while the key is held.",
   "extendedkeybinds.mode.tooltip": "Trigger mode: %s",
+
   "extendedkeybinds.narrator.mode": "Trigger mode for %s: %s"
 }

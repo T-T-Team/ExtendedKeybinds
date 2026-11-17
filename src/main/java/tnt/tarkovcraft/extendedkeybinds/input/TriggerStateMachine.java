@@ -1,5 +1,7 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
+
 public final class TriggerStateMachine {
 
     private boolean physicallyDown;
@@ -11,11 +13,11 @@ public final class TriggerStateMachine {
     private int pulseTicks;
     private int pendingTriggers;
 
-    public boolean onInput(boolean down, InputMode mode, InputSettings timings, long now, boolean phantom) {
+    public boolean onInput(boolean down, InputMode mode, long now, boolean phantom) {
         boolean wasDown = this.physicallyDown;
         this.physicallyDown = down;
         if (down && !wasDown) {
-            return this.onPressEdge(mode, timings, now, phantom);
+            return this.onPressEdge(mode, now, phantom);
         }
         if (!down && wasDown) {
             return this.onReleaseEdge(mode);
@@ -23,7 +25,7 @@ public final class TriggerStateMachine {
         return false;
     }
 
-    private boolean onPressEdge(InputMode mode, InputSettings timings, long now, boolean phantom) {
+    private boolean onPressEdge(InputMode mode, long now, boolean phantom) {
         if (phantom) {
             return false;
         }
@@ -34,7 +36,7 @@ public final class TriggerStateMachine {
         return switch (mode) {
             case PRESS -> true;
             case DOUBLE_CLICK -> {
-                if (this.lastTapTimeMs >= 0L && now - this.lastTapTimeMs <= timings.doubleClickInterval()) {
+                if (this.lastTapTimeMs >= 0L && now - this.lastTapTimeMs <= ExtendedKeybindsApi.getDoubleClickInterval()) {
                     this.lastTapTimeMs = -1L;
                     this.activated = true;
                     this.pendingTriggers++;
@@ -59,13 +61,13 @@ public final class TriggerStateMachine {
         return false;
     }
 
-    public boolean preTick(InputMode mode, InputSettings timings, long now) {
+    public boolean preTick(InputMode mode, long now) {
         if (this.armed) {
             this.heldTicks++;
         }
         return switch (mode) {
             case HOLD -> {
-                if (this.armed && !this.activated && now - this.pressTimeMs >= timings.holdDuration()) {
+                if (this.armed && !this.activated && now - this.pressTimeMs >= ExtendedKeybindsApi.getRequiredHoldDuration()) {
                     this.activated = true;
                     this.pendingTriggers++;
                     yield true;
@@ -80,7 +82,7 @@ public final class TriggerStateMachine {
                 yield false;
             }
             case DOUBLE_CLICK -> {
-                if (this.lastTapTimeMs >= 0L && now - this.lastTapTimeMs > timings.doubleClickInterval()) {
+                if (this.lastTapTimeMs >= 0L && now - this.lastTapTimeMs > ExtendedKeybindsApi.getDoubleClickInterval()) {
                     this.lastTapTimeMs = -1L;
                 }
                 yield false;
@@ -123,16 +125,8 @@ public final class TriggerStateMachine {
         this.pendingTriggers = 0;
     }
 
-    public boolean isPhysicallyDown() {
-        return this.physicallyDown;
-    }
-
     public boolean isArmed() {
         return this.armed;
-    }
-
-    public int getPendingTriggers() {
-        return this.pendingTriggers;
     }
 
     public long getHeldMillis(long now) {

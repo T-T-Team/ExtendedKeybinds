@@ -1,7 +1,6 @@
-package tnt.tarkovcraft.extendedkeybinds.api;
+package tnt.tarkovcraft.extendedkeybinds.input;
 
-import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.input.TickableKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 
 import java.util.Collection;
 import java.util.Set;

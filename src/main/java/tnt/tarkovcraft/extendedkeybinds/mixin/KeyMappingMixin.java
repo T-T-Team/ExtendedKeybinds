@@ -2,7 +2,7 @@ package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
-import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 import tnt.tarkovcraft.extendedkeybinds.input.*;
 import net.minecraft.client.KeyMapping;
@@ -149,12 +149,11 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (state == null) {
             return;
         }
-        InputSettings timings = KeymappingFileStorage.getInputSettings();
         if (state.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()
-                && state.onInput(false, this.extendedkeybinds$inputMode, timings, now, false)) {
+                && state.onInput(false, this.extendedkeybinds$inputMode, now, false)) {
             this.extendedkeybinds$fireListeners(state, now);
         }
-        if (state.preTick(this.extendedkeybinds$inputMode, timings, now)) {
+        if (state.preTick(this.extendedkeybinds$inputMode, now)) {
             this.extendedkeybinds$fireListeners(state, now);
         }
         this.extendedkeybinds$syncLogicalDown(state);
@@ -178,7 +177,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
         long now = Util.getMillis();
         boolean phantom = TriggerManager.isSyncingKeyStates();
-        if (state.onInput(down, this.extendedkeybinds$inputMode, KeymappingFileStorage.getInputSettings(), now, phantom)) {
+        if (state.onInput(down, this.extendedkeybinds$inputMode, now, phantom)) {
             this.extendedkeybinds$fireListeners(state, now);
         }
         if (this.extendedkeybinds$inputMode != InputMode.PRESS) {
@@ -260,7 +259,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (needsState) {
             TriggerStateMachine state = new TriggerStateMachine();
             if (this.isDown) {
-                state.onInput(true, this.extendedkeybinds$inputMode, KeymappingFileStorage.getInputSettings(), Util.getMillis(), true);
+                state.onInput(true, this.extendedkeybinds$inputMode, Util.getMillis(), true);
             }
             this.extendedkeybinds$state = state;
             TriggerManager.track((KeyMapping) (Object) this);

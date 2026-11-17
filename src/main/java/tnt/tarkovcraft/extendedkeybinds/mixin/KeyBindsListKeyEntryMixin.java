@@ -1,8 +1,5 @@
 package tnt.tarkovcraft.extendedkeybinds.mixin;
 
-import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
-import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.input.KeymappingFileStorage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -21,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,9 +115,9 @@ public abstract class KeyBindsListKeyEntryMixin {
         button.visible = !allowed.equals(Set.of(InputMode.PRESS));
         button.active = allowed.size() > 1;
         button.setMessage(mode.getShortName());
-        button.setTooltip(Tooltip.create(Component.translatable("extendedkeybinds.mode.tooltip", mode.getDisplayName().copy().withStyle(ChatFormatting.YELLOW))
+        button.setTooltip(Tooltip.create(Component.translatable("extendedkeybinds.mode.tooltip", mode.getDisplayName().withStyle(ChatFormatting.YELLOW))
                 .append("\n")
-                .append(mode.getDescription(KeymappingFileStorage.getInputSettings()).copy().withStyle(ChatFormatting.GRAY))));
+                .append(mode.getDescription().withStyle(ChatFormatting.GRAY))));
     }
 
     @Unique

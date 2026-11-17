@@ -18,9 +18,6 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
 }
 
-repositories {
-}
-
 base {
     archivesName = mod_id
 }
@@ -64,7 +61,12 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+repositories {
+    maven { url "https://repo.repsy.io/toma/public" }
+}
+
 dependencies {
+    implementation "dev.toma.configuration:configuration-neoforge:${configuration}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -79,6 +81,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_version            : mod_version,
             mod_authors            : mod_authors,
             mod_description        : mod_description,
+            configuration_range    : configuration_range
     ]
     inputs.properties replaceProperties
     expand replaceProperties

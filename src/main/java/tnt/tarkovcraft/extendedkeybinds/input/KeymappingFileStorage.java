@@ -3,116 +3,98 @@ package tnt.tarkovcraft.extendedkeybinds.input;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
-import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.fml.loading.FMLPaths;
+import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class KeymappingFileStorage {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private static final String OPTIONS = "options";
-    private static final String KEYMAP = "keymap";
-
-    private static InputSettings inputSettings = InputSettings.DEFAULT;
-    private static final Map<String, JsonElement> UNKNOWN_ENTRIES = new LinkedHashMap<>();
+    private static final Codec<Map<String, InputMode>> CODEC = Codec.unboundedMap(Codec.STRING, InputMode.CODEC);
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
+    private static final Map<String, InputMode> MISSING_KEYMAPPINGS = new LinkedHashMap<>();
 
     private KeymappingFileStorage() {
     }
 
-    public static InputSettings getInputSettings() {
-        return inputSettings;
-    }
-
-    public static Path getConfigFile() {
-        return FMLPaths.CONFIGDIR.get().resolve("extendedkeybinds.json");
+    private static Path getMappingFilePath() {
+        return FMLPaths.CONFIGDIR.get().resolve("extendedkeybinds/key_types.json");
     }
 
     public static void load(KeyMapping[] keyMappings) {
-        Path file = getConfigFile();
-        inputSettings = InputSettings.DEFAULT;
-        UNKNOWN_ENTRIES.clear();
+        Path path = getMappingFilePath();
+        // add default inputs
         for (KeyMapping mapping : keyMappings) {
             ExtendedKeyMapping extended = (ExtendedKeyMapping) mapping;
             extended.extendedkeybinds$setInputMode(extended.extendedkeybinds$getDefaultInputMode());
         }
-        if (!Files.exists(file)) {
+        if (!Files.exists(path)) {
             return;
         }
-        JsonObject root;
+
+        JsonElement json;
         try {
-            root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+            String raw = Files.readString(path);
+            json = GSON.toJsonTree(raw);
         } catch (Exception e) {
-            ExtendedKeybindsClient.LOGGER.error("Failed to read {}, using defaults", file, e);
-            backupBrokenFile(file);
+            ExtendedKeybindsClient.LOGGER.error("Failed to read {}, using defaults", path, e);
             return;
         }
 
-        JsonElement options = root.get(OPTIONS);
-        if (options != null) {
-            inputSettings = InputSettings.CODEC.parse(JsonOps.INSTANCE, options)
-                    .resultOrPartial(error -> ExtendedKeybindsClient.LOGGER.warn("Invalid input options in {}: {}", file, error))
-                    .orElse(InputSettings.DEFAULT);
-        }
-
-        JsonElement keymapElement = root.get(KEYMAP);
-        if (keymapElement == null || !keymapElement.isJsonObject()) {
-            return;
-        }
-        for (Map.Entry<String, JsonElement> entry : keymapElement.getAsJsonObject().entrySet()) {
-            String name = entry.getKey();
-            KeyMapping mapping = KeyMapping.get(name);
-            if (mapping == null) {
-                UNKNOWN_ENTRIES.put(name, entry.getValue().deepCopy());
-                continue;
+        DataResult<Map<String, InputMode>> result = CODEC.parse(JsonOps.COMPRESSED, json);
+        var saveData = result.getOrThrow();
+        for (var entry : saveData.entrySet()) {
+            String keyName = entry.getKey();
+            KeyMapping mapping = KeyMapping.get(keyName);
+            InputMode inputMode = entry.getValue();
+            if (mapping != null) {
+                ExtendedKeybindsApi.setInputMode(mapping, inputMode);
+            } else {
+                MISSING_KEYMAPPINGS.put(keyName, inputMode);
             }
-            KeybindSettings.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
-                    .resultOrPartial(error -> ExtendedKeybindsClient.LOGGER.warn("Invalid settings for key mapping {} in {}: {}", name, file, error))
-                    .ifPresent(settings -> ((ExtendedKeyMapping) mapping).extendedkeybinds$setInputMode(settings.inputMode()));
         }
     }
 
     public static void save(KeyMapping[] keyMappings) {
-        JsonObject keymap = new JsonObject();
-        UNKNOWN_ENTRIES.forEach((name, json) -> keymap.add(name, json.deepCopy()));
+        Map<String, InputMode> saveData = new LinkedHashMap<>();
+        // Save registered mappings if mode is different from default
         for (KeyMapping mapping : keyMappings) {
-            ExtendedKeyMapping extended = (ExtendedKeyMapping) mapping;
-            InputMode mode = extended.extendedkeybinds$getInputMode();
-            if (mode != extended.extendedkeybinds$getDefaultInputMode()) {
-                keymap.add(mapping.getName(), KeybindSettings.CODEC.encodeStart(JsonOps.INSTANCE, new KeybindSettings(mode)).getOrThrow());
+            InputMode defaultMode = ExtendedKeybindsApi.getDefaultInputMode(mapping);
+            InputMode configuredMode = ExtendedKeybindsApi.getInputMode(mapping);
+            if (configuredMode != defaultMode) {
+                saveData.put(mapping.getName(), configuredMode);
             }
         }
-        JsonObject root = new JsonObject();
-        root.add(OPTIONS, InputSettings.CODEC.encodeStart(JsonOps.INSTANCE, inputSettings).getOrThrow());
-        root.add(KEYMAP, keymap);
+        // Save unidentified entries. In theory can save default modes, but it is not a big issue
+        Set<String> recovered = new HashSet<>();
+        MISSING_KEYMAPPINGS.forEach((name, mode) -> {
+            InputMode existing = saveData.putIfAbsent(name, mode);
+            if (existing != null) { // previously missing keybinding identified, mark for removal
+                recovered.add(name);
+            }
+        });
+        recovered.forEach(MISSING_KEYMAPPINGS::remove); // clear recovered keybinds
 
-        Path file = getConfigFile();
+        DataResult<JsonElement> result = CODEC.encodeStart(JsonOps.COMPRESSED, saveData);
+        JsonElement json = result.getOrThrow();
+        Path file = getMappingFilePath();
         try {
             Files.createDirectories(file.getParent());
-            Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
+            Files.writeString(file, GSON.toJson(json), StandardCharsets.UTF_8);
         } catch (IOException e) {
             ExtendedKeybindsClient.LOGGER.error("Failed to save {}", file, e);
-        }
-    }
-
-    private static void backupBrokenFile(Path file) {
-        Path backup = file.resolveSibling(file.getFileName() + ".broken");
-        try {
-            Files.move(file, backup, StandardCopyOption.REPLACE_EXISTING);
-            ExtendedKeybindsClient.LOGGER.warn("Moved unreadable {} to {}", file, backup);
-        } catch (IOException e) {
-            ExtendedKeybindsClient.LOGGER.error("Failed to back up unreadable {}", file, e);
         }
     }
 }

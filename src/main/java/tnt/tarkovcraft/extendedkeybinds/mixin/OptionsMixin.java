@@ -1,8 +1,5 @@
 package tnt.tarkovcraft.extendedkeybinds.mixin;
 
-import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeyMapping;
-import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.input.KeymappingFileStorage;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import org.spongepowered.asm.mixin.Final;
@@ -12,8 +9,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.EnumSet;
+import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.input.KeymappingFileStorage;
 
 @Mixin(Options.class)
 public abstract class OptionsMixin {
@@ -54,6 +52,6 @@ public abstract class OptionsMixin {
 
     @Unique
     private static void extendedkeybinds$lockToPress(KeyMapping mapping) {
-        ((ExtendedKeyMapping) mapping).extendedkeybinds$setAllowedInputModes(EnumSet.of(InputMode.PRESS));
+        ((ExtendedKeyMapping) mapping).extendedkeybinds$setAllowedInputModes(InputMode.pressOnly());
     }
 }

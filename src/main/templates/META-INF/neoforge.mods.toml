@@ -8,7 +8,6 @@ authors="${mod_authors}"
 description='''
 ${mod_description}
 '''
-displayTest = "IGNORE_ALL_VERSION"
 
 [[mixins]]
 config="${mod_id}.mixins.json"
@@ -17,15 +16,22 @@ config="${mod_id}.mixins.json"
 #file="META-INF/accesstransformer.cfg"
 
 [[dependencies.${mod_id}]]
-    modId="neoforge"
-    type="required"
-    versionRange="[${neo_min_version},)"
-    ordering="NONE"
-    side="CLIENT"
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[${neo_min_version},)"
+    ordering = "NONE"
+    side = "CLIENT"
 
 [[dependencies.${mod_id}]]
-    modId="minecraft"
-    type="required"
-    versionRange="${minecraft_version_range}"
-    ordering="NONE"
-    side="CLIENT"
+    modId = "minecraft"
+    type = "required"
+    versionRange = "${minecraft_version_range}"
+    ordering = "NONE"
+    side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+    modId = "configuration"
+    type = "required"
+    versionRange = "${configuration_range}"
+    ordering = "AFTER"
+    side = "CLIENT"
