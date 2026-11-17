@@ -13,6 +13,7 @@ public final class TriggerManager {
     private static final Set<KeyMapping> TRACKED = Collections.newSetFromMap(new IdentityHashMap<>());
     private static KeyMapping[] snapshot = new KeyMapping[0];
     private static boolean syncingKeyStates;
+    private static long dispatchTime = -1L;
 
     private TriggerManager() {
     }
@@ -29,6 +30,22 @@ public final class TriggerManager {
 
     public static void setSyncingKeyStates(boolean syncing) {
         syncingKeyStates = syncing;
+    }
+
+    /**
+     * Pins the timestamp for the duration of a single key event dispatch, so all key mappings sharing
+     * the key evaluate their timing rules against the same value
+     */
+    public static void beginDispatch() {
+        dispatchTime = Util.getMillis();
+    }
+
+    public static void endDispatch() {
+        dispatchTime = -1L;
+    }
+
+    public static long now() {
+        return dispatchTime >= 0L ? dispatchTime : Util.getMillis();
     }
 
     public static void onPreTick(ClientTickEvent.Pre event) {

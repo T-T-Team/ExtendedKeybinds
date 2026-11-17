@@ -30,6 +30,10 @@ public final class ConfigureDefaultKeybindsEvent extends Event {
         ExtendedKeybindsApi.setAllowedInputModes(mapping, InputMode.pressOnly());
     }
 
+    public void continuousOnly(KeyMapping mapping) {
+        ExtendedKeybindsApi.setAllowedInputModes(mapping, InputMode.continuousOnly());
+    }
+
     public void forEachInCategory(KeyMapping.Category category, Consumer<KeyMapping> consumer) {
         for (KeyMapping mapping : this.keyMappings) {
             if (mapping.getCategory().equals(category)) {

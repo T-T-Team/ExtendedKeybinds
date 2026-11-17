@@ -29,9 +29,18 @@ public class ExtendedKeybindsClient {
     }
 
     public static void configureDefaults(Options options, KeyMapping[] keyMappings) {
-        // toggle keys
-        setCategoryInputList(keyMappings, KeyMapping.Category.MOVEMENT, InputMode.pressOnly());
         setCategoryInputList(keyMappings, KeyMapping.Category.DEBUG, InputMode.pressOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyUp, InputMode.continuousOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyDown, InputMode.continuousOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyLeft, InputMode.continuousOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyRight, InputMode.continuousOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyJump, InputMode.continuousOnly());
+        ExtendedKeybindsApi.setAllowedInputModes(options.keyDebugModifier, InputMode.continuousOnly());
+
+        ExtendedKeybindsApi.setDefaultInputMode(options.keyPlayerList, InputMode.CONTINUOUS);
+        ExtendedKeybindsApi.setDefaultInputMode(options.keySpectatorOutlines, InputMode.CONTINUOUS);
+        ExtendedKeybindsApi.setDefaultInputMode(options.keySaveHotbarActivator, InputMode.CONTINUOUS);
+        ExtendedKeybindsApi.setDefaultInputMode(options.keyLoadHotbarActivator, InputMode.CONTINUOUS);
         // event
         NeoForge.EVENT_BUS.post(new ConfigureDefaultKeybindsEvent(keyMappings, options));
     }

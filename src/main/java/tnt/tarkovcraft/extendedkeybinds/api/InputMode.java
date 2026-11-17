@@ -13,7 +13,12 @@ import java.util.Set;
 
 public enum InputMode implements StringRepresentable {
 
-    /** vanilla-like press event, default for all keybinds */
+    /**
+     * Triggered once when the key is pressed, default for all keybinds. Holding the key does not trigger again and
+     * {@link net.minecraft.client.KeyMapping#isDown()} is only true for a single tick.
+     * When the key is shared with {@link #HOLD} or {@link #DOUBLE_CLICK} keybinds, the trigger is delayed until the
+     * gesture is resolved (key release / double click interval expiry).
+     */
     PRESS("press"),
     /** Same as above but triggered once key is released */
     RELEASE("release"),
@@ -27,6 +32,7 @@ public enum InputMode implements StringRepresentable {
     public static final Codec<InputMode> CODEC = StringRepresentable.fromEnum(InputMode::values);
     private static final Set<InputMode> PRESS_ONLY = EnumSet.of(PRESS);
     private static final Set<InputMode> NO_CONTINUOUS = EnumSet.range(PRESS, DOUBLE_CLICK);
+    private static final Set<InputMode> CONTINUOUS_ONLY = EnumSet.of(CONTINUOUS);
 
     private final String serializedName;
 
@@ -40,6 +46,11 @@ public enum InputMode implements StringRepresentable {
 
     public static Collection<InputMode> noContinuous() {
         return NO_CONTINUOUS;
+    }
+
+    /** For keybinds which are polled via {@link net.minecraft.client.KeyMapping#isDown()}, such as movement */
+    public static Collection<InputMode> continuousOnly() {
+        return CONTINUOUS_ONLY;
     }
 
     @Override

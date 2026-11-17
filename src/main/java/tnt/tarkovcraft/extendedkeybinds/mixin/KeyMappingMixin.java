@@ -1,18 +1,13 @@
 package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
-import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
-import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
-import tnt.tarkovcraft.extendedkeybinds.input.*;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.ToggleKeyMapping;
-import net.minecraft.util.Util;
 import net.neoforged.neoforge.client.extensions.IKeyMappingExtension;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.sdl.SDLMouse;
 import org.lwjgl.system.MemoryStack;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -20,6 +15,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
+import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
+import tnt.tarkovcraft.extendedkeybinds.input.TriggerManager;
+import tnt.tarkovcraft.extendedkeybinds.input.TriggerStateMachine;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -27,6 +28,10 @@ import java.util.function.Consumer;
 
 @Mixin(KeyMapping.class)
 public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedKeyMapping {
+
+    @Shadow
+    @Final
+    private static Map<String, KeyMapping> ALL;
 
     @Shadow
     boolean isDown;
@@ -50,6 +55,9 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Shadow
     public abstract InputConstants.Key getDefaultKey();
 
+    @Shadow
+    public abstract boolean isUnbound();
+
     @Override
     public InputMode extendedkeybinds$getInputMode() {
         return this.extendedkeybinds$inputMode;
@@ -66,7 +74,6 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             return;
         }
         this.extendedkeybinds$inputMode = inputMode;
-        this.extendedkeybinds$ensureState();
         this.extendedkeybinds$resetInputState();
     }
 
@@ -100,6 +107,10 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             ExtendedKeybindsClient.LOGGER.warn("Tried to set empty allowed input modes for key mapping {}, ignoring", this.getName());
             return;
         }
+        if (this.extendedkeybinds$isLegacy() && !EnumSet.copyOf(inputModes).equals(EnumSet.of(InputMode.PRESS))) {
+            ExtendedKeybindsClient.LOGGER.warn("Toggle key mapping {} only supports {} input mode, ignoring", this.getName(), InputMode.PRESS);
+            return;
+        }
         Set<InputMode> allowed = EnumSet.copyOf(inputModes);
         this.extendedkeybinds$allowedInputModes = allowed;
         InputMode fallback = allowed.contains(InputMode.PRESS) ? InputMode.PRESS : allowed.iterator().next();
@@ -121,9 +132,10 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         TriggerStateMachine state = this.extendedkeybinds$state;
         if (state != null) {
             state.reset();
-            if (this.extendedkeybinds$inputMode != InputMode.PRESS) {
-                this.isDown = false;
-            }
+        }
+        if (!this.extendedkeybinds$isLegacy()) {
+            this.isDown = false;
+            this.clickCount = 0;
         }
     }
 
@@ -134,7 +146,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             this.extendedkeybinds$listeners = new CopyOnWriteArrayList<>();
         }
         this.extendedkeybinds$listeners.add(listener);
-        this.extendedkeybinds$ensureState();
+        this.extendedkeybinds$getOrCreateState();
     }
 
     @Override
@@ -150,13 +162,11 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (state == null) {
             return;
         }
-        if (state.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()
-                && state.onInput(false, this.extendedkeybinds$inputMode, now, false)) {
-            this.extendedkeybinds$fireListeners(state, now);
+        // release may get lost (focus change, screen swallowing the event), synthesize it
+        if (state.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()) {
+            state.onInput(false, this.extendedkeybinds$inputMode, now, false);
         }
-        if (state.preTick(this.extendedkeybinds$inputMode, now)) {
-            this.extendedkeybinds$fireListeners(state, now);
-        }
+        state.preTick(this.extendedkeybinds$inputMode, now);
         this.extendedkeybinds$syncLogicalDown(state);
     }
 
@@ -170,18 +180,25 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         this.extendedkeybinds$syncLogicalDown(state);
     }
 
+    @Inject(method = "set(Lcom/mojang/blaze3d/platform/InputConstants$Key;Z)V", at = @At("HEAD"))
+    private static void extendedkeybinds$beforeDispatch(InputConstants.Key key, boolean state, CallbackInfo ci) {
+        TriggerManager.beginDispatch();
+    }
+
+    @Inject(method = "set(Lcom/mojang/blaze3d/platform/InputConstants$Key;Z)V", at = @At("RETURN"))
+    private static void extendedkeybinds$afterDispatch(InputConstants.Key key, boolean state, CallbackInfo ci) {
+        TriggerManager.endDispatch();
+    }
+
     @Inject(method = "setDown", at = @At("HEAD"), cancellable = true)
     private void extendedkeybinds$onSetDown(boolean down, CallbackInfo ci) {
-        TriggerStateMachine state = this.extendedkeybinds$state;
+        boolean legacy = this.extendedkeybinds$isLegacy();
+        TriggerStateMachine state = legacy ? this.extendedkeybinds$state : this.extendedkeybinds$getOrCreateState();
         if (state == null) {
             return;
         }
-        long now = Util.getMillis();
-        boolean phantom = TriggerManager.isSyncingKeyStates();
-        if (state.onInput(down, this.extendedkeybinds$inputMode, now, phantom)) {
-            this.extendedkeybinds$fireListeners(state, now);
-        }
-        if (this.extendedkeybinds$inputMode != InputMode.PRESS) {
+        state.onInput(down, this.extendedkeybinds$inputMode, TriggerManager.now(), TriggerManager.isSyncingKeyStates());
+        if (!legacy) {
             this.isDown = state.logicalDown(this.extendedkeybinds$inputMode);
             ci.cancel();
         }
@@ -189,11 +206,12 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
 
     @Inject(method = "consumeClick", at = @At("HEAD"), cancellable = true)
     private void extendedkeybinds$onConsumeClick(CallbackInfoReturnable<Boolean> cir) {
-        TriggerStateMachine state = this.extendedkeybinds$state;
-        if (state != null && this.extendedkeybinds$inputMode != InputMode.PRESS) {
-            this.clickCount = 0;
-            cir.setReturnValue(state.consumeTrigger());
+        if (this.extendedkeybinds$isLegacy()) {
+            return;
         }
+        // vanilla click count also increments on OS key repeat, triggers come from the state machine only
+        this.clickCount = 0;
+        cir.setReturnValue(this.extendedkeybinds$getOrCreateState().consumeTrigger());
     }
 
     @Inject(method = "release", at = @At("HEAD"))
@@ -241,9 +259,14 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     }
 
     @Unique
+    private boolean extendedkeybinds$isLegacy() {
+        return (Object) this instanceof ToggleKeyMapping;
+    }
+
+    @Unique
     private Set<InputMode> extendedkeybinds$allowedModes() {
         if (this.extendedkeybinds$allowedInputModes == null) {
-            this.extendedkeybinds$allowedInputModes = (Object) this instanceof ToggleKeyMapping
+            this.extendedkeybinds$allowedInputModes = this.extendedkeybinds$isLegacy()
                     ? EnumSet.of(InputMode.PRESS)
                     : EnumSet.allOf(InputMode.class);
         }
@@ -251,41 +274,52 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     }
 
     @Unique
-    private void extendedkeybinds$ensureState() {
-        if (this.extendedkeybinds$state != null) {
-            return;
-        }
-        boolean needsState = this.extendedkeybinds$inputMode != InputMode.PRESS
-                || (this.extendedkeybinds$listeners != null && !this.extendedkeybinds$listeners.isEmpty());
-        if (needsState) {
-            TriggerStateMachine state = new TriggerStateMachine();
-            if (this.isDown) {
-                state.onInput(true, this.extendedkeybinds$inputMode, Util.getMillis(), true);
-            }
+    private TriggerStateMachine extendedkeybinds$getOrCreateState() {
+        TriggerStateMachine state = this.extendedkeybinds$state;
+        if (state == null) {
+            state = new TriggerStateMachine(this::extendedkeybinds$competingModes, this::extendedkeybinds$fireListeners);
             this.extendedkeybinds$state = state;
             TriggerManager.track((KeyMapping) (Object) this);
         }
+        return state;
     }
 
     @Unique
     private void extendedkeybinds$syncLogicalDown(TriggerStateMachine state) {
-        if (this.extendedkeybinds$inputMode != InputMode.PRESS) {
+        if (!this.extendedkeybinds$isLegacy()) {
             this.isDown = state.logicalDown(this.extendedkeybinds$inputMode);
         }
     }
 
     @Unique
-    private void extendedkeybinds$fireListeners(TriggerStateMachine state, long now) {
+    private Set<InputMode> extendedkeybinds$competingModes() {
+        Set<InputMode> modes = EnumSet.noneOf(InputMode.class);
+        if (this.isUnbound()) {
+            return modes;
+        }
+        KeyMapping self = (KeyMapping) (Object) this;
+        InputConstants.Key key = this.getKey();
+        InputMode mode = this.extendedkeybinds$inputMode;
+        for (KeyMapping other : ALL.values()) {
+            if (other == self || !key.equals(other.getKey()) || this.getKeyModifier() != other.getKeyModifier()
+                    || !other.isConflictContextAndModifierActive()) {
+                continue;
+            }
+            InputMode otherMode = ((ExtendedKeyMapping) other).extendedkeybinds$getInputMode();
+            if (extendedkeybinds$areModesDistinguishable(mode, otherMode)) {
+                modes.add(otherMode);
+            }
+        }
+        return modes;
+    }
+
+    @Unique
+    private void extendedkeybinds$fireListeners(long heldMillis, int heldTicks) {
         List<Consumer<KeyPressContext>> listeners = this.extendedkeybinds$listeners;
         if (listeners == null || listeners.isEmpty()) {
             return;
         }
-        InputMode mode = this.extendedkeybinds$inputMode;
-        long heldMillis = switch (mode) {
-            case PRESS, DOUBLE_CLICK -> 0L;
-            case RELEASE, HOLD, CONTINUOUS -> state.getHeldMillis(now);
-        };
-        KeyPressContext context = new KeyPressContext((KeyMapping) (Object) this, mode, heldMillis, state.getHeldTicks());
+        KeyPressContext context = new KeyPressContext((KeyMapping) (Object) this, this.extendedkeybinds$inputMode, heldMillis, heldTicks);
         for (Consumer<KeyPressContext> listener : listeners) {
             try {
                 listener.accept(context);
@@ -315,11 +349,17 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
     }
 
+    /**
+     * Two modes can share a key when each physical gesture resolves to exactly one of them.
+     * CONTINUOUS reacts to every press and PRESS/RELEASE both react to every tap, so those pairs always conflict.
+     */
     @Unique
     private static boolean extendedkeybinds$areModesDistinguishable(InputMode a, InputMode b) {
-        if (a == b) {
+        if (a == b || a == InputMode.CONTINUOUS || b == InputMode.CONTINUOUS) {
             return false;
         }
-        return a != InputMode.PRESS && a != InputMode.CONTINUOUS && b != InputMode.PRESS && b != InputMode.CONTINUOUS;
+        boolean aTap = a == InputMode.PRESS || a == InputMode.RELEASE;
+        boolean bTap = b == InputMode.PRESS || b == InputMode.RELEASE;
+        return !(aTap && bTap);
     }
 }

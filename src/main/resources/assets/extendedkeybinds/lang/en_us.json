@@ -1,10 +1,10 @@
 {
   "extendedkeybinds.mode.press": "Press",
   "extendedkeybinds.mode.press.short": "P",
-  "extendedkeybinds.mode.press.description": "Triggers when the key is pressed.",
+  "extendedkeybinds.mode.press.description": "Triggers once when the key is pressed. Delayed until release or double click timeout when sharing the key with Hold or Double Click.",
   "extendedkeybinds.mode.release": "Release",
   "extendedkeybinds.mode.release.short": "R",
-  "extendedkeybinds.mode.release.description": "Triggers when the key is released.",
+  "extendedkeybinds.mode.release.description": "Triggers when the key is released. Delayed until double click timeout when sharing the key with Double Click.",
   "extendedkeybinds.mode.hold": "Hold",
   "extendedkeybinds.mode.hold.short": "H",
   "extendedkeybinds.mode.hold.description": "Triggers after holding the key for %1$s ms.",
