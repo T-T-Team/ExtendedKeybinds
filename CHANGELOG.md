@@ -1,2 +1,2 @@
-# Release 1.0.0+26.3
-- Initial mod release :) have fun
+# Release 1.0.0+26.1.2
+- Backported to 26.1.2
