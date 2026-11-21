@@ -6,7 +6,7 @@ on:
 
 env:
   JAVA_VENDOR: 'microsoft'
-  JAVA_VERSION: '25'
+  JAVA_VERSION: '21'
   GAME_DEPENDENCIES: 'configuration'
   CURSEFORGE_PROJECT: '1812598'
   MODRINTH_PROJECT: 'oY4xE7DQ'

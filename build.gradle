@@ -26,7 +26,7 @@ java {
     withSourcesJar()
 
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -36,11 +36,6 @@ neoForge {
     runs {
         client {
             client()
-        }
-
-        data {
-            clientData()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
         configureEach {
@@ -66,7 +61,7 @@ repositories {
 }
 
 dependencies {
-    implementation "dev.toma.configuration:configuration-neoforge:${configuration}"
+    implementation "dev.toma.configuration:configuration-${minecraft_version}:${configuration}-neoforge"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

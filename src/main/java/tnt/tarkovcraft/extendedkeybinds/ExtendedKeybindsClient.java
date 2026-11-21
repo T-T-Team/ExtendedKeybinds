@@ -1,6 +1,7 @@
 package tnt.tarkovcraft.extendedkeybinds;
 
 import dev.toma.configuration.Configuration;
+import dev.toma.configuration.config.format.ConfigFormats;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -24,13 +25,11 @@ import tnt.tarkovcraft.extendedkeybinds.config.ExtendedKeybindsConfig;
 import tnt.tarkovcraft.extendedkeybinds.input.ScrollInputHandler;
 import tnt.tarkovcraft.extendedkeybinds.input.TriggerManager;
 
-import java.util.Collection;
-
 @Mod(value = ExtendedKeybindsApi.MODID, dist = Dist.CLIENT)
 public class ExtendedKeybindsClient {
 
     public static final Logger LOGGER = LogManager.getLogger("ExtendedKeybinds");
-    public static final ExtendedKeybindsConfig CONFIG = Configuration.registerSimpleJsonConfig(ExtendedKeybindsConfig.class);
+    public static final ExtendedKeybindsConfig CONFIG = Configuration.registerConfig(ExtendedKeybindsConfig.class, ConfigFormats.JSON).getConfigInstance();
 
     public ExtendedKeybindsClient(IEventBus modEventBus) {
         modEventBus.addListener(this::registerKeyMappings);
@@ -41,13 +40,11 @@ public class ExtendedKeybindsClient {
     }
 
     public static void configureDefaults(Options options, KeyMapping[] keyMappings) {
-        setCategoryInputList(keyMappings, KeyMapping.Category.DEBUG, InputMode.pressOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyUp, InputMode.continuousOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyDown, InputMode.continuousOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyLeft, InputMode.continuousOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyRight, InputMode.continuousOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyJump, InputMode.continuousOnly());
-        ExtendedKeybindsApi.setAllowedInputModes(options.keyDebugModifier, InputMode.continuousOnly());
 
         ExtendedKeybindsApi.setDefaultInputMode(options.keyPlayerList, InputMode.CONTINUOUS);
         ExtendedKeybindsApi.setDefaultInputMode(options.keySpectatorOutlines, InputMode.CONTINUOUS);
@@ -55,14 +52,6 @@ public class ExtendedKeybindsClient {
         ExtendedKeybindsApi.setDefaultInputMode(options.keyLoadHotbarActivator, InputMode.CONTINUOUS);
         // event
         NeoForge.EVENT_BUS.post(new ConfigureDefaultKeybindsEvent(keyMappings, options));
-    }
-
-    private static void setCategoryInputList(KeyMapping[] mappings, KeyMapping.Category category, Collection<InputMode> inputs) {
-        for (var mapping : mappings) {
-            if (mapping.getCategory().equals(category)) {
-                ExtendedKeybindsApi.setAllowedInputModes(mapping, inputs);
-            }
-        }
     }
 
     private void registerKeyMappings(RegisterKeyMappingsEvent event) {
@@ -83,7 +72,7 @@ public class ExtendedKeybindsClient {
         LocalPlayer player = minecraft.player;
         if (player != null && player.isSpectator()) {
             SpectatorGui spectatorGui = minecraft.gui.getSpectatorGui();
-            int wheel = event.getAccumulatedScrollY() == 0 ? -event.getAccumulatedScrollX() : event.getAccumulatedScrollY();
+            int wheel = (int) (event.getScrollDeltaY() == 0 ? -event.getScrollDeltaX() : event.getScrollDeltaY()); // TODO verify
             if (spectatorGui.isMenuActive()) {
                 spectatorGui.onMouseScrolled(-wheel);
             } else {

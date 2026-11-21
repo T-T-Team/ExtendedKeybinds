@@ -1,3 +1,5 @@
+modLoader="javafml"
+loaderVersion="[1,)"
 license="${mod_license}"
 issueTrackerURL="${mod_issue_tracker}"
 
@@ -8,7 +10,7 @@ displayName="${mod_name}"
 displayURL="${mod_homepage}"
 authors="${mod_authors}"
 updateJSONURL="${mod_update_tracker}"
-iconFile="assets/icon.png"
+logoFile="assets/icon.png"
 description='''
 ${mod_description}
 '''

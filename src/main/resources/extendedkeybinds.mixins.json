@@ -1,12 +1,13 @@
 {
   "required": true,
   "package": "tnt.tarkovcraft.extendedkeybinds.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "client": [
     "InputConstantsTypeMixin",
     "KeyBindsListKeyEntryMixin",
     "KeyBindsScreenAccessor",
     "KeyMappingMixin",
+    "KeyMappingAccessor",
     "MouseHandlerMixin",
     "OptionsMixin"
   ],

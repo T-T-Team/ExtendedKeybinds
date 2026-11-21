@@ -2,14 +2,13 @@ package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,6 +22,7 @@ import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.api.ScrollKeys;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -52,13 +52,13 @@ public abstract class KeyBindsListKeyEntryMixin {
         this.extendedkeybinds$updateModeButton();
     }
 
-    @Inject(method = "extractContent", at = @At("TAIL"))
-    private void extendedkeybinds$render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a, CallbackInfo ci) {
+    @Inject(method = "render", at = @At("TAIL"))
+    private void extendedkeybinds$render(GuiGraphics graphics, int i, int x, int y, int width, int height, int mouseX, int mouseY, boolean hovered, float a, CallbackInfo ci) {
         Button button = this.extendedkeybinds$modeButton;
         if (button != null && button.visible) {
             // gap between conflict and buttons is 7px
             button.setPosition(this.changeButton.getX() - 7 - ExtendedKeybindsApi.BUTTON_SIZE, this.changeButton.getY());
-            button.extractRenderState(graphics, mouseX, mouseY, a);
+            button.render(graphics, mouseX, mouseY, a);
         }
     }
 

@@ -1,12 +1,11 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.ScrollWheelHandler;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import org.joml.Vector2ic;
@@ -19,12 +18,12 @@ import java.util.List;
 public final class ScrollInputHandler {
 
     public static final KeyMapping HOTBAR_PREVIOUS = ExtendedKeybindsApi.configure(
-            new KeyMapping("key.hotbar.previous",InputConstants.Type.MOUSE, ScrollKeys.WHEEL_UP_VALUE, KeyMapping.Category.GAMEPLAY)
-    ).onTrigger(_ -> scroll(1)).mapping();
+            new KeyMapping("key.hotbar.previous",InputConstants.Type.MOUSE, ScrollKeys.WHEEL_UP_VALUE, KeyMapping.CATEGORY_GAMEPLAY)
+    ).onTrigger(ctx -> scroll(1)).mapping();
 
     public static final KeyMapping HOTBAR_NEXT = ExtendedKeybindsApi.configure(
-            new KeyMapping("key.hotbar.next", InputConstants.Type.MOUSE, ScrollKeys.WHEEL_DOWN_VALUE, KeyMapping.Category.GAMEPLAY)
-    ).onTrigger(_ -> scroll(-1)).mapping();
+            new KeyMapping("key.hotbar.next", InputConstants.Type.MOUSE, ScrollKeys.WHEEL_DOWN_VALUE, KeyMapping.CATEGORY_GAMEPLAY)
+    ).onTrigger(ctx -> scroll(-1)).mapping();
 
     private ScrollInputHandler() {
     }
@@ -77,7 +76,7 @@ public final class ScrollInputHandler {
         if (player == null)
             return;
         Inventory inventory = player.getInventory();
-        inventory.setSelectedSlot(ScrollWheelHandler.getNextScrollWheelSelection(wheel, inventory.getSelectedSlot(), Inventory.getSelectionSize()));
+        inventory.swapPaint(wheel);
     }
 
     private static void pulse(InputConstants.Key key, int count) {

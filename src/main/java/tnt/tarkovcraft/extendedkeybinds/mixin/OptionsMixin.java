@@ -16,13 +16,13 @@ public abstract class OptionsMixin {
     @Shadow
     public KeyMapping[] keyMappings;
 
-    @Inject(method = "load", at = @At("HEAD"))
+    @Inject(method = "load(Z)V", at = @At("HEAD"))
     private void extendedkeybinds$beforeLoad(CallbackInfo ci) {
         Options options = (Options) (Object) this;
         ExtendedKeybindsClient.configureDefaults(options, this.keyMappings);
     }
 
-    @Inject(method = "load", at = @At("RETURN"))
+    @Inject(method = "load(Z)V", at = @At("RETURN"))
     private void extendedkeybinds$afterLoad(CallbackInfo ci) {
         KeymappingFileStorage.load(this.keyMappings);
     }

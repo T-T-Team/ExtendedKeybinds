@@ -154,9 +154,9 @@ public final class ExtendedKeybindsApi {
     public static Button createInputModeWidget(KeyMapping keyMapping, Component mappingName, int x, int y, ModeCycleHandler cycleHandler) {
         InputMode inputMode = getInputMode(keyMapping);
         Component displayName = inputMode.getDisplayName();
-        return Button.builder(CommonComponents.EMPTY, _ -> cycleHandler.cycleButtonMode())
+        return Button.builder(CommonComponents.EMPTY, btn -> cycleHandler.cycleButtonMode())
                 .bounds(x, y, BUTTON_SIZE, BUTTON_SIZE)
-                .createNarration(_ -> Component.translatable("extendedkeybinds.narrator.mode", mappingName, displayName))
+                .createNarration(c -> Component.translatable("extendedkeybinds.narrator.mode", mappingName, displayName))
                 .build();
     }
 

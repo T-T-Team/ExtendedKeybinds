@@ -12,6 +12,7 @@ import net.neoforged.fml.loading.FMLPaths;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.mixin.KeyMappingAccessor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -60,7 +61,7 @@ public final class KeymappingFileStorage {
         var saveData = result.getOrThrow();
         for (var entry : saveData.entrySet()) {
             String keyName = entry.getKey();
-            KeyMapping mapping = KeyMapping.get(keyName);
+            KeyMapping mapping = KeyMappingAccessor.extendedkeybinds$getKeyMappings().get(keyName);
             InputMode inputMode = entry.getValue();
             if (mapping != null) {
                 ExtendedKeybindsApi.setInputMode(mapping, inputMode);

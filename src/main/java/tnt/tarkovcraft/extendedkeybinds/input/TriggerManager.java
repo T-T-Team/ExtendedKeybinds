@@ -1,7 +1,7 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
+import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.util.Util;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.util.Collections;

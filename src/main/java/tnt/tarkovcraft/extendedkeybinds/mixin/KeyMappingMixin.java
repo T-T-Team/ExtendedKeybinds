@@ -6,7 +6,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
 import net.neoforged.neoforge.client.extensions.IKeyMappingExtension;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,6 +23,7 @@ import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 import tnt.tarkovcraft.extendedkeybinds.input.TriggerManager;
 import tnt.tarkovcraft.extendedkeybinds.input.TriggerStateMachine;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -345,7 +345,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
         Window window = Minecraft.getInstance().getWindow();
         return switch (key.getType()) {
-            case KEYSYM -> InputConstants.isKeyDown(window, key.getValue());
+            case KEYSYM -> InputConstants.isKeyDown(window.getWindow(), key.getValue());
             case SCANCODE -> true;
             case MOUSE -> extendedkeybinds$isMouseButtonDown(window, key.getValue());
         };
@@ -356,7 +356,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (button < GLFW.GLFW_MOUSE_BUTTON_1 || button > GLFW.GLFW_MOUSE_BUTTON_LAST) {
             return true;
         }
-        return GLFW.glfwGetMouseButton(window.handle(), button) == GLFW.GLFW_PRESS;
+        return GLFW.glfwGetMouseButton(window.getWindow(), button) == GLFW.GLFW_PRESS;
     }
 
     @Unique
