@@ -82,7 +82,7 @@ public class ExtendedKeybindsClient {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player != null && player.isSpectator()) {
-            SpectatorGui spectatorGui = minecraft.gui.hud.getSpectatorGui();
+            SpectatorGui spectatorGui = minecraft.gui.getSpectatorGui();
             int wheel = event.getAccumulatedScrollY() == 0 ? -event.getAccumulatedScrollX() : event.getAccumulatedScrollY();
             if (spectatorGui.isMenuActive()) {
                 spectatorGui.onMouseScrolled(-wheel);

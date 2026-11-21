@@ -1,12 +1,13 @@
 package tnt.tarkovcraft.extendedkeybinds.mixin;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
 import net.neoforged.neoforge.client.extensions.IKeyMappingExtension;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.sdl.SDLMouse;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -342,21 +343,20 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         if (ScrollKeys.isScrollKey(key)) {
             return false;
         }
+        Window window = Minecraft.getInstance().getWindow();
         return switch (key.getType()) {
-            case KEYBOARD -> InputConstants.isKeyDown(key.getValue());
-            case MOUSE -> extendedkeybinds$isMouseButtonDown(key.getValue());
+            case KEYSYM -> InputConstants.isKeyDown(window, key.getValue());
+            case SCANCODE -> true;
+            case MOUSE -> extendedkeybinds$isMouseButtonDown(window, key.getValue());
         };
     }
 
     @Unique
-    private static boolean extendedkeybinds$isMouseButtonDown(int button) {
-        if (button < 1 || button > 32) {
+    private static boolean extendedkeybinds$isMouseButtonDown(Window window, int button) {
+        if (button < GLFW.GLFW_MOUSE_BUTTON_1 || button > GLFW.GLFW_MOUSE_BUTTON_LAST) {
             return true;
         }
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            int flags = SDLMouse.SDL_GetMouseState(stack.mallocFloat(1), stack.mallocFloat(1));
-            return (flags & (1 << (button - 1))) != 0;
-        }
+        return GLFW.glfwGetMouseButton(window.handle(), button) == GLFW.GLFW_PRESS;
     }
 
     @Unique
