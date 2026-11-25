@@ -202,7 +202,17 @@ public final class ExtendedKeybindsApi {
          * @param modes allowed input modes
          */
         public Configurator allowedModes(InputMode... modes) {
-            convert(this.mapping).extendedkeybinds$setAllowedInputModes(Arrays.asList(modes));
+            return this.allowedModes(Arrays.asList(modes));
+        }
+
+        /**
+         * Sets allowed input modes for keymapping, same as {@link ExtendedKeybindsApi#setAllowedInputModes(KeyMapping, Collection)}
+         *
+         * @param modes allowed input modes
+         * @since 1.1.0
+         */
+        public Configurator allowedModes(Collection<InputMode> modes) {
+            convert(this.mapping).extendedkeybinds$setAllowedInputModes(modes);
             return this;
         }
 
