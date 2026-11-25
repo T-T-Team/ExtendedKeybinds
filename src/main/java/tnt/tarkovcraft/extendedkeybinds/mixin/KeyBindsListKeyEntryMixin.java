@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
-import tnt.tarkovcraft.extendedkeybinds.api.ScrollKeys;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 
 import javax.annotation.Nullable;
@@ -105,11 +104,11 @@ public abstract class KeyBindsListKeyEntryMixin {
         ExtendedKeyMapping extended = (ExtendedKeyMapping) this.key;
         Set<InputMode> allowed = extended.extendedkeybinds$getAllowedInputModes();
         InputMode mode = extended.extendedkeybinds$getEffectiveInputMode();
-        boolean scrollBound = ScrollKeys.isScrollKey(this.key.getKey());
-        button.active = allowed.size() > 1 && !scrollBound;
+        Component lockReason = extended.extendedkeybinds$isInputModeLocked() ? extended.extendedkeybinds$getInputModeLockReason() : null;
+        button.active = allowed.size() > 1 && lockReason == null;
         button.setMessage(mode.getShortName());
-        Component description = scrollBound
-                ? Component.translatable("extendedkeybinds.mode.scroll_locked").withStyle(ChatFormatting.GRAY)
+        Component description = lockReason != null
+                ? lockReason.copy().withStyle(ChatFormatting.GRAY)
                 : mode.getDescription().withStyle(ChatFormatting.GRAY);
         button.setTooltip(Tooltip.create(Component.translatable("extendedkeybinds.mode.tooltip", mode.getDisplayName().withStyle(ChatFormatting.YELLOW))
                 .append("\n")

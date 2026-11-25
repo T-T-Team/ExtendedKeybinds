@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -129,6 +130,35 @@ public final class ExtendedKeybindsApi {
     }
 
     /**
+     * Replaces the default input logic of keymapping while it is bound to a key matching the override condition.
+     * Not supported for {@link net.minecraft.client.ToggleKeyMapping}s.
+     *
+     * @param mapping  queried keymapping
+     * @param override the override, or {@code null} to always use the default logic
+     * @see InputHandlerOverride#vanillaMouse()
+     */
+    public static void setInputHandlerOverride(KeyMapping mapping, @Nullable InputHandlerOverride override) {
+        convert(mapping).extendedkeybinds$setInputHandlerOverride(override);
+    }
+
+    /**
+     * @param mapping queried keymapping
+     * @return configured input handler override, or {@code null}
+     */
+    public static @Nullable InputHandlerOverride getInputHandlerOverride(KeyMapping mapping) {
+        return convert(mapping).extendedkeybinds$getInputHandlerOverride();
+    }
+
+    /**
+     * @param mapping queried keymapping
+     * @return whether the effective input mode is currently forced regardless of selected mode, e.g. when bound to
+     * mouse wheel or when an {@link InputHandlerOverride} with locked mode applies
+     */
+    public static boolean isInputModeLocked(KeyMapping mapping) {
+        return convert(mapping).extendedkeybinds$isInputModeLocked();
+    }
+
+    /**
      * @return Configured required hold duration for {@link InputMode#HOLD} keybinds
      */
     public static int getRequiredHoldDuration() {
@@ -223,6 +253,16 @@ public final class ExtendedKeybindsApi {
          */
         public Configurator onTrigger(Consumer<KeyPressContext> listener) {
             ExtendedKeybindsApi.setTriggerListener(this.mapping, listener);
+            return this;
+        }
+
+        /**
+         * Sets input handler override for keymapping, same as {@link ExtendedKeybindsApi#setInputHandlerOverride(KeyMapping, InputHandlerOverride)}
+         *
+         * @param override the override
+         */
+        public Configurator inputHandler(@Nullable InputHandlerOverride override) {
+            convert(this.mapping).extendedkeybinds$setInputHandlerOverride(override);
             return this;
         }
 

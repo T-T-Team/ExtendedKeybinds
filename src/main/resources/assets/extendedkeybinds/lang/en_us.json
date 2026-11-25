@@ -16,6 +16,8 @@
   "extendedkeybinds.mode.continuous.description": "Triggers every tick while the key is held.",
   "extendedkeybinds.mode.tooltip": "Trigger mode: %s",
   "extendedkeybinds.mode.scroll_locked": "Mouse wheel bindings always trigger once per scroll step.",
+  "extendedkeybinds.mode.mouse_locked": "Follows vanilla behaviour while bound to a mouse button.",
+  "extendedkeybinds.mode.locked": "Trigger mode is fixed for the current key.",
 
   "extendedkeybinds.narrator.mode": "Trigger mode for %s: %s",
 

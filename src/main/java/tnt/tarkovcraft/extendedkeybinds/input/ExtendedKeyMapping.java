@@ -1,8 +1,11 @@
 package tnt.tarkovcraft.extendedkeybinds.input;
 
+import net.minecraft.network.chat.Component;
+import tnt.tarkovcraft.extendedkeybinds.api.InputHandlerOverride;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -50,6 +53,26 @@ public interface ExtendedKeyMapping extends TickableKeyMapping {
     }
 
     default void extendedkeybinds$removeTriggerListener(Consumer<KeyPressContext> listener) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default @Nullable InputHandlerOverride extendedkeybinds$getInputHandlerOverride() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default void extendedkeybinds$setInputHandlerOverride(@Nullable InputHandlerOverride override) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default boolean extendedkeybinds$isInputModeLocked() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default @Nullable Component extendedkeybinds$getInputModeLockReason() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default boolean extendedkeybinds$resolvesGestures() {
         throw new UnsupportedOperationException("Not implemented");
     }
 }

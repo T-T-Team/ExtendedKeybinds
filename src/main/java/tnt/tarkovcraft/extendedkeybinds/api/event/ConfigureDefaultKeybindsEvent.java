@@ -4,6 +4,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import net.neoforged.bus.api.Event;
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
+import tnt.tarkovcraft.extendedkeybinds.api.InputHandlerOverride;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 
 import java.util.function.Consumer;
@@ -32,6 +33,10 @@ public final class ConfigureDefaultKeybindsEvent extends Event {
 
     public void continuousOnly(KeyMapping mapping) {
         ExtendedKeybindsApi.setAllowedInputModes(mapping, InputMode.continuousOnly());
+    }
+
+    public void vanillaMouse(KeyMapping mapping) {
+        ExtendedKeybindsApi.setInputHandlerOverride(mapping, InputHandlerOverride.vanillaMouse());
     }
 
     public void forEachInCategory(String category, Consumer<KeyMapping> consumer) {

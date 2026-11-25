@@ -19,6 +19,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tnt.tarkovcraft.extendedkeybinds.api.ExtendedKeybindsApi;
+import tnt.tarkovcraft.extendedkeybinds.api.InputHandlerOverride;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
 import tnt.tarkovcraft.extendedkeybinds.api.event.ConfigureDefaultKeybindsEvent;
 import tnt.tarkovcraft.extendedkeybinds.config.ExtendedKeybindsConfig;
@@ -46,6 +47,10 @@ public class ExtendedKeybindsClient {
         ExtendedKeybindsApi.setAllowedInputModes(options.keyRight, InputMode.continuousOnly());
         ExtendedKeybindsApi.setAllowedInputModes(options.keyJump, InputMode.continuousOnly());
 
+        // vanilla handles held attack/use on its own through isDown, keep vanilla behavior while bound to mouse. Fixes incompat with mods such as pbj
+        ExtendedKeybindsApi.setInputHandlerOverride(options.keyAttack, InputHandlerOverride.vanillaMouse());
+        ExtendedKeybindsApi.setInputHandlerOverride(options.keyUse, InputHandlerOverride.vanillaMouse());
+
         ExtendedKeybindsApi.setDefaultInputMode(options.keyPlayerList, InputMode.CONTINUOUS);
         ExtendedKeybindsApi.setDefaultInputMode(options.keySpectatorOutlines, InputMode.CONTINUOUS);
         ExtendedKeybindsApi.setDefaultInputMode(options.keySaveHotbarActivator, InputMode.CONTINUOUS);
@@ -72,7 +77,7 @@ public class ExtendedKeybindsClient {
         LocalPlayer player = minecraft.player;
         if (player != null && player.isSpectator()) {
             SpectatorGui spectatorGui = minecraft.gui.getSpectatorGui();
-            int wheel = (int) (event.getScrollDeltaY() == 0 ? -event.getScrollDeltaX() : event.getScrollDeltaY()); // TODO verify
+            int wheel = (int) (event.getScrollDeltaY() == 0 ? -event.getScrollDeltaX() : event.getScrollDeltaY());
             if (spectatorGui.isMenuActive()) {
                 spectatorGui.onMouseScrolled(-wheel);
             } else {

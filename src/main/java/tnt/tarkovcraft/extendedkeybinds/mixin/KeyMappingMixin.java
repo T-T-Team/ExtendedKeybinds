@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
+import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.client.extensions.IKeyMappingExtension;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
@@ -16,7 +17,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tnt.tarkovcraft.extendedkeybinds.ExtendedKeybindsClient;
+import tnt.tarkovcraft.extendedkeybinds.api.InputHandlerOverride;
 import tnt.tarkovcraft.extendedkeybinds.api.InputMode;
+import tnt.tarkovcraft.extendedkeybinds.api.KeyInputHandler;
 import tnt.tarkovcraft.extendedkeybinds.api.KeyPressContext;
 import tnt.tarkovcraft.extendedkeybinds.api.ScrollKeys;
 import tnt.tarkovcraft.extendedkeybinds.input.ExtendedKeyMapping;
@@ -47,7 +50,11 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Unique
     private @Nullable Set<InputMode> extendedkeybinds$allowedInputModes;
     @Unique
-    private @Nullable TriggerStateMachine extendedkeybinds$state;
+    private @Nullable KeyInputHandler extendedkeybinds$handler;
+    @Unique
+    private boolean extendedkeybinds$handlerOverridden;
+    @Unique
+    private @Nullable InputHandlerOverride extendedkeybinds$override;
     @Unique
     private @Nullable List<Consumer<KeyPressContext>> extendedkeybinds$listeners;
 
@@ -67,9 +74,14 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
 
     @Override
     public InputMode extendedkeybinds$getEffectiveInputMode() {
-        return ScrollKeys.isScrollKey(this.getKey())
-                ? InputMode.PRESS
-                : this.extendedkeybinds$inputMode;
+        if (ScrollKeys.isScrollKey(this.getKey())) {
+            return InputMode.PRESS;
+        }
+        InputHandlerOverride override = this.extendedkeybinds$override;
+        if (override != null && override.lockedMode() != null && this.extendedkeybinds$overrideApplies()) {
+            return override.lockedMode();
+        }
+        return this.extendedkeybinds$inputMode;
     }
 
     @Override
@@ -138,9 +150,9 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
 
     @Override
     public void extendedkeybinds$resetInputState() {
-        TriggerStateMachine state = this.extendedkeybinds$state;
-        if (state != null) {
-            state.reset();
+        KeyInputHandler handler = this.extendedkeybinds$handler;
+        if (handler != null) {
+            handler.reset();
         }
         if (!this.extendedkeybinds$isLegacy()) {
             this.isDown = false;
@@ -155,7 +167,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             this.extendedkeybinds$listeners = new CopyOnWriteArrayList<>();
         }
         this.extendedkeybinds$listeners.add(listener);
-        this.extendedkeybinds$getOrCreateState();
+        this.extendedkeybinds$getOrCreateHandler();
     }
 
     @Override
@@ -166,27 +178,79 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     }
 
     @Override
+    public @Nullable InputHandlerOverride extendedkeybinds$getInputHandlerOverride() {
+        return this.extendedkeybinds$override;
+    }
+
+    @Override
+    public void extendedkeybinds$setInputHandlerOverride(@Nullable InputHandlerOverride override) {
+        if (this.extendedkeybinds$isLegacy()) {
+            ExtendedKeybindsClient.LOGGER.warn("Toggle key mapping {} does not support input handler overrides, ignoring", this.getName());
+            return;
+        }
+        if (this.extendedkeybinds$override == override) {
+            return;
+        }
+        this.extendedkeybinds$override = override;
+        if (this.extendedkeybinds$handler != null) {
+            this.extendedkeybinds$handler.reset();
+            this.extendedkeybinds$handler = null;
+            this.extendedkeybinds$getOrCreateHandler();
+        }
+        this.extendedkeybinds$resetInputState();
+    }
+
+    @Override
+    public boolean extendedkeybinds$isInputModeLocked() {
+        if (ScrollKeys.isScrollKey(this.getKey())) {
+            return true;
+        }
+        InputHandlerOverride override = this.extendedkeybinds$override;
+        return override != null && override.lockedMode() != null && this.extendedkeybinds$overrideApplies();
+    }
+
+    @Override
+    public @Nullable Component extendedkeybinds$getInputModeLockReason() {
+        if (ScrollKeys.isScrollKey(this.getKey())) {
+            return Component.translatable("extendedkeybinds.mode.scroll_locked");
+        }
+        if (!this.extendedkeybinds$isInputModeLocked()) {
+            return null;
+        }
+        Component tooltip = Objects.requireNonNull(this.extendedkeybinds$override).lockedTooltip();
+        return tooltip != null ? tooltip : Component.translatable("extendedkeybinds.mode.locked");
+    }
+
+    @Override
+    public boolean extendedkeybinds$resolvesGestures() {
+        if (this.extendedkeybinds$isLegacy()) {
+            return true;
+        }
+        return this.extendedkeybinds$getOrCreateHandler().resolvesGestures();
+    }
+
+    @Override
     public void extendedkeybinds$preTick(long now) {
-        TriggerStateMachine state = this.extendedkeybinds$state;
-        if (state == null) {
+        KeyInputHandler handler = this.extendedkeybinds$handler;
+        if (handler == null) {
             return;
         }
         // release may get lost (focus change, screen swallowing the event), synthesize it
-        if (state.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()) {
-            state.onInput(false, this.extendedkeybinds$getEffectiveInputMode(), now, false);
+        if (handler.isArmed() && !this.extendedkeybinds$isPhysicallyHeld()) {
+            handler.onInput(false, this.extendedkeybinds$getEffectiveInputMode(), now, false);
         }
-        state.preTick(this.extendedkeybinds$getEffectiveInputMode(), now);
-        this.extendedkeybinds$syncLogicalDown(state);
+        handler.preTick(this.extendedkeybinds$getEffectiveInputMode(), now);
+        this.extendedkeybinds$syncLogicalDown(handler);
     }
 
     @Override
     public void extendedkeybinds$postTick() {
-        TriggerStateMachine state = this.extendedkeybinds$state;
-        if (state == null) {
+        KeyInputHandler handler = this.extendedkeybinds$handler;
+        if (handler == null) {
             return;
         }
-        state.postTick();
-        this.extendedkeybinds$syncLogicalDown(state);
+        handler.postTick();
+        this.extendedkeybinds$syncLogicalDown(handler);
     }
 
     @Inject(method = "set(Lcom/mojang/blaze3d/platform/InputConstants$Key;Z)V", at = @At("HEAD"))
@@ -202,13 +266,13 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     @Inject(method = "setDown", at = @At("HEAD"), cancellable = true)
     private void extendedkeybinds$onSetDown(boolean down, CallbackInfo ci) {
         boolean legacy = this.extendedkeybinds$isLegacy();
-        TriggerStateMachine state = legacy ? this.extendedkeybinds$state : this.extendedkeybinds$getOrCreateState();
-        if (state == null) {
+        KeyInputHandler handler = legacy ? this.extendedkeybinds$handler : this.extendedkeybinds$getOrCreateHandler();
+        if (handler == null) {
             return;
         }
-        state.onInput(down, this.extendedkeybinds$getEffectiveInputMode(), TriggerManager.now(), TriggerManager.isSyncingKeyStates());
+        handler.onInput(down, this.extendedkeybinds$getEffectiveInputMode(), TriggerManager.now(), TriggerManager.isSyncingKeyStates());
         if (!legacy) {
-            this.isDown = state.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
+            this.isDown = handler.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
             ci.cancel();
         }
     }
@@ -219,7 +283,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             return;
         }
         this.clickCount = 0;
-        cir.setReturnValue(this.extendedkeybinds$getOrCreateState().consumeTrigger());
+        cir.setReturnValue(this.extendedkeybinds$getOrCreateHandler().consumeTrigger());
     }
 
     @Inject(method = "release", at = @At("HEAD"))
@@ -229,6 +293,10 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
 
     @Inject(method = {"setKeyModifierAndCode", "setKey"}, at = @At("TAIL"))
     private void extendedkeybinds$onRebind(CallbackInfo ci) {
+        if (this.extendedkeybinds$handler != null) {
+            // swap between default and override handler when the new key changes which one applies
+            this.extendedkeybinds$getOrCreateHandler();
+        }
         this.extendedkeybinds$resetInputState();
     }
 
@@ -255,7 +323,7 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             return;
         }
         if (this.getKey().equals(that.getKey()) && this.getKeyModifier() == that.getKeyModifier()
-                && extendedkeybinds$areModesDistinguishable(this.extendedkeybinds$getEffectiveInputMode(), ((ExtendedKeyMapping) that).extendedkeybinds$getEffectiveInputMode())) {
+                && extendedkeybinds$areDistinguishable(this, (ExtendedKeyMapping) that)) {
             cir.setReturnValue(false);
         }
     }
@@ -282,20 +350,35 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
     }
 
     @Unique
-    private TriggerStateMachine extendedkeybinds$getOrCreateState() {
-        TriggerStateMachine state = this.extendedkeybinds$state;
-        if (state == null) {
-            state = new TriggerStateMachine(this::extendedkeybinds$competingModes, this::extendedkeybinds$fireListeners);
-            this.extendedkeybinds$state = state;
-            TriggerManager.track((KeyMapping) (Object) this);
-        }
-        return state;
+    private boolean extendedkeybinds$overrideApplies() {
+        InputHandlerOverride override = this.extendedkeybinds$override;
+        return override != null && !this.isUnbound() && override.appliesTo(this.getKey());
     }
 
     @Unique
-    private void extendedkeybinds$syncLogicalDown(TriggerStateMachine state) {
+    private KeyInputHandler extendedkeybinds$getOrCreateHandler() {
+        KeyInputHandler handler = this.extendedkeybinds$handler;
+        boolean overridden = this.extendedkeybinds$overrideApplies();
+        if (handler != null && overridden == this.extendedkeybinds$handlerOverridden) {
+            return handler;
+        }
+        if (handler != null) {
+            handler.reset();
+        }
+        KeyInputHandler.Context context = new KeyInputHandler.Context(this::extendedkeybinds$competingModes, this::extendedkeybinds$fireListeners);
+        handler = overridden
+                ? Objects.requireNonNull(this.extendedkeybinds$override).factory().create(context)
+                : new TriggerStateMachine(context);
+        this.extendedkeybinds$handler = handler;
+        this.extendedkeybinds$handlerOverridden = overridden;
+        TriggerManager.track((KeyMapping) (Object) this);
+        return handler;
+    }
+
+    @Unique
+    private void extendedkeybinds$syncLogicalDown(KeyInputHandler handler) {
         if (!this.extendedkeybinds$isLegacy()) {
-            this.isDown = state.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
+            this.isDown = handler.logicalDown(this.extendedkeybinds$getEffectiveInputMode());
         }
     }
 
@@ -307,15 +390,14 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
         }
         KeyMapping self = (KeyMapping) (Object) this;
         InputConstants.Key key = this.getKey();
-        InputMode mode = this.extendedkeybinds$getEffectiveInputMode();
         for (KeyMapping other : ALL.values()) {
             if (other == self || !key.equals(other.getKey()) || this.getKeyModifier() != other.getKeyModifier()
                     || !other.isConflictContextAndModifierActive()) {
                 continue;
             }
-            InputMode otherMode = ((ExtendedKeyMapping) other).extendedkeybinds$getEffectiveInputMode();
-            if (extendedkeybinds$areModesDistinguishable(mode, otherMode)) {
-                modes.add(otherMode);
+            ExtendedKeyMapping extendedOther = (ExtendedKeyMapping) other;
+            if (extendedkeybinds$areDistinguishable(this, extendedOther)) {
+                modes.add(extendedOther.extendedkeybinds$getEffectiveInputMode());
             }
         }
         return modes;
@@ -357,6 +439,15 @@ public abstract class KeyMappingMixin implements IKeyMappingExtension, ExtendedK
             return true;
         }
         return GLFW.glfwGetMouseButton(window.getWindow(), button) == GLFW.GLFW_PRESS;
+    }
+
+    @Unique
+    private static boolean extendedkeybinds$areDistinguishable(ExtendedKeyMapping a, ExtendedKeyMapping b) {
+        if (!extendedkeybinds$areModesDistinguishable(a.extendedkeybinds$getEffectiveInputMode(), b.extendedkeybinds$getEffectiveInputMode())) {
+            return false;
+        }
+        // handlers which trigger immediately cannot step aside for the other binding
+        return a.extendedkeybinds$resolvesGestures() && b.extendedkeybinds$resolvesGestures();
     }
 
     @Unique
